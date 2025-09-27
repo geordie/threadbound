@@ -31,5 +31,8 @@ header-includes: |
       }] {};
   }
   \usepackage{fontspec}
+  \usepackage{array}
   \newfontfamily\emojifont{Symbola}
+  \usepackage{newunicodechar}
+  \newunicodechar{￼}{}
 ---
