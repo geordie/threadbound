@@ -14,10 +14,13 @@ import (
 
 // Generator handles markdown generation
 type Generator struct {
-	config              *models.BookConfig
+	config                  *models.BookConfig
 	sentMessageTemplate     *template.Template
 	receivedMessageTemplate *template.Template
 	titlePageTemplate       *template.Template
+	copyrightPageTemplate   *template.Template
+	pageStructureTemplate   *template.Template
+	yamlHeaderTemplate      *template.Template
 }
 
 // New creates a new markdown generator
@@ -58,6 +61,26 @@ func (g *Generator) loadMessageTemplates() {
 	if err != nil {
 		panic(fmt.Sprintf("failed to parse title page template: %v", err))
 	}
+
+	// Load copyright page template
+	copyrightContent, err := ioutil.ReadFile("templates/copyright-page.tex")
+	if err != nil {
+		panic(fmt.Sprintf("failed to load copyright page template: %v", err))
+	}
+	g.copyrightPageTemplate, err = template.New("copyright-page").Parse(string(copyrightContent))
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse copyright page template: %v", err))
+	}
+
+	// Load page structure template
+	pageStructureContent, err := ioutil.ReadFile("templates/page-structure.tex")
+	if err != nil {
+		panic(fmt.Sprintf("failed to load page structure template: %v", err))
+	}
+	g.pageStructureTemplate, err = template.New("page-structure").Parse(string(pageStructureContent))
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse page structure template: %v", err))
+	}
 }
 
 // GenerateBook creates the complete markdown book
@@ -73,12 +96,8 @@ func (g *Generator) GenerateBook(messages []models.Message, handles map[int]mode
 	// Copyright page
 	g.writeCopyrightPage(&builder)
 
-	// Table of contents placeholder
-	builder.WriteString("\\newpage\n\n# Table of Contents\n\n")
-	builder.WriteString("\\tableofcontents\n\n")
-
-	// Main content
-	builder.WriteString("\\newpage\n\n# Messages\n\n")
+	// Table of contents and page structure
+	g.writePageStructure(&builder)
 
 	// Group messages by date for better organization
 	g.writeMessages(&builder, messages, handles)
@@ -163,23 +182,44 @@ func (g *Generator) writeTitlePage(builder *strings.Builder) {
 	builder.WriteString("\n\n")
 }
 
-// writeCopyrightPage writes the copyright page
+// writeCopyrightPage writes the copyright page using template
 func (g *Generator) writeCopyrightPage(builder *strings.Builder) {
-	builder.WriteString("\\newpage\n\n")
-	builder.WriteString("\\thispagestyle{empty}\n\n")
-	builder.WriteString("\\vspace*{\\fill}\n\n")
-	builder.WriteString("\\begin{flushleft}\n")
-	builder.WriteString(fmt.Sprintf("© %d", time.Now().Year()))
-	if g.config.Author != "" {
-		builder.WriteString(fmt.Sprintf(" %s", g.config.Author))
+	// Use template - fail if not available
+	if g.copyrightPageTemplate == nil {
+		panic("copyright page template not loaded")
 	}
-	builder.WriteString("\\\\[0.5cm]\n\n")
-	builder.WriteString("This book contains personal messages and conversations.\n")
-	builder.WriteString("All rights reserved. No part of this publication may be reproduced,\n")
-	builder.WriteString("distributed, or transmitted in any form or by any means without\n")
-	builder.WriteString("the prior written permission of the copyright holder.\n\n")
-	builder.WriteString("Generated using imessages-book tool.\n")
-	builder.WriteString("\\end{flushleft}\n\n")
+
+	data := struct {
+		Year   int
+		Author string
+	}{
+		Year:   time.Now().Year(),
+		Author: g.config.Author,
+	}
+
+	var buf bytes.Buffer
+	if err := g.copyrightPageTemplate.Execute(&buf, data); err != nil {
+		panic(fmt.Sprintf("failed to execute copyright page template: %v", err))
+	}
+
+	builder.WriteString(buf.String())
+	builder.WriteString("\n\n")
+}
+
+// writePageStructure writes the table of contents and page structure using template
+func (g *Generator) writePageStructure(builder *strings.Builder) {
+	// Use template - fail if not available
+	if g.pageStructureTemplate == nil {
+		panic("page structure template not loaded")
+	}
+
+	var buf bytes.Buffer
+	if err := g.pageStructureTemplate.Execute(&buf, nil); err != nil {
+		panic(fmt.Sprintf("failed to execute page structure template: %v", err))
+	}
+
+	builder.WriteString(buf.String())
+	builder.WriteString("\n\n")
 }
 
 // writeMessages writes all messages in conversation format
