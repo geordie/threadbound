@@ -2,8 +2,6 @@
 
 {{else if .ShowTimestamp}}\small\textcolor{gray}{ {{.Timestamp}} }
 
-{{end}}\begin{minipage}{0.7\textwidth}
-\tikz\node [draw=none, fill=gray!20, rounded corners=4pt, text width=0.7\textwidth, align=left, inner sep=8pt] { {{.Text}} };
-\end{minipage}{{if .Reactions}}
-
-\small\textcolor{blue}{ {{range $i, $reaction := .Reactions}}{{if gt $i 0}}\,{{end}}{{$reaction.ReactionEmoji}}\,{{$reaction.SenderName}}{{end}} }{{end}}
+{{end}}\begin{tabular}[t]{@{}p{0.7\textwidth}@{\hspace{0.02\textwidth}}p{0.25\textwidth}@{}}
+\tikz[baseline=(textnode.base)]\node [draw=none, fill=gray!20, rounded corners=4pt, text width=0.7\textwidth, align=left, inner sep=8pt] (textnode) { {{.Text}} }; & {{if .Reactions}}\raggedleft\small\textcolor{darkgray}{ {{range $i, $reaction := .Reactions}}{{if gt $i 0}}\\{{end}}{{$reaction.ReactionEmoji}}\,{{$reaction.SenderName}}{{end}} }{{end}} \\
+\end{tabular}

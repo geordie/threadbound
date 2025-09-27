@@ -1,7 +1,7 @@
 \begin{flushright}
-\tikz\node [draw=none, fill=blue!20, rounded corners=4pt, text width=0.7\textwidth, align=left, inner sep=8pt] { {{.Text}} };
+\begin{tabular}[t]{@{}p{0.25\textwidth}@{\hspace{0.02\textwidth}}p{0.7\textwidth}@{}}
+{{if .Reactions}}\raggedright\small\textcolor{darkgray}{ {{range $i, $reaction := .Reactions}}{{if gt $i 0}}\\{{end}}{{$reaction.ReactionEmoji}}\,{{$reaction.SenderName}}{{end}} }{{end}} & \tikz[baseline=(textnode.base)]\node [draw=none, fill=blue!20, rounded corners=4pt, text width=0.7\textwidth, align=left, inner sep=8pt] (textnode) { {{.Text}} }; \\
+\end{tabular}
 
-\small\textcolor{gray}{ {{.Timestamp}} }{{if .Reactions}}
-
-\small\textcolor{blue}{ {{range $i, $reaction := .Reactions}}{{if gt $i 0}}\,{{end}}{{$reaction.ReactionEmoji}}\,{{$reaction.SenderName}}{{end}} }{{end}}
+\small\textcolor{gray}{ {{.Timestamp}} }
 \end{flushright}
