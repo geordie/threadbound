@@ -30,4 +30,6 @@ header-includes: |
           \usebox{\picbox}};
       }] {};
   }
+  \usepackage{fontspec}
+  \newfontfamily\emojifont{Symbola}
 ---

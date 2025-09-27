@@ -1,5 +1,7 @@
 \begin{flushright}
 \tikz\node [draw=none, fill=blue!20, rounded corners=4pt, text width=0.7\textwidth, align=left, inner sep=8pt] { {{.Text}} };
 
-\small\textcolor{gray}{ {{.Timestamp}} }
+\small\textcolor{gray}{ {{.Timestamp}} }{{if .Reactions}}
+
+\small\textcolor{blue}{ {{range $i, $reaction := .Reactions}}{{if gt $i 0}}\,{{end}}{{$reaction.ReactionEmoji}}\,{{$reaction.SenderName}}{{end}} }{{end}}
 \end{flushright}

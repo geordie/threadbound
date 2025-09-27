@@ -1,5 +1,9 @@
-\begin{minipage}{0.7\textwidth}
-\tikz\node [draw=none, fill=gray!20, rounded corners=4pt, text width=0.7\textwidth, align=left, inner sep=8pt] { {{.Text}} };
-\end{minipage}
+{{if .ShowSender}}\textbf{ {{.Sender}} } \small\textcolor{gray}{ {{.Timestamp}} }
 
-\small\textcolor{gray}{ {{.Timestamp}} }
+{{else if .ShowTimestamp}}\small\textcolor{gray}{ {{.Timestamp}} }
+
+{{end}}\begin{minipage}{0.7\textwidth}
+\tikz\node [draw=none, fill=gray!20, rounded corners=4pt, text width=0.7\textwidth, align=left, inner sep=8pt] { {{.Text}} };
+\end{minipage}{{if .Reactions}}
+
+\small\textcolor{blue}{ {{range $i, $reaction := .Reactions}}{{if gt $i 0}}\,{{end}}{{$reaction.ReactionEmoji}}\,{{$reaction.SenderName}}{{end}} }{{end}}
