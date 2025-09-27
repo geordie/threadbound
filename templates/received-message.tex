@@ -1,3 +1,5 @@
-\colorbox{gray!20}{\parbox{0.7\textwidth}{ {{.Text}} }}
+\begin{minipage}{0.7\textwidth}
+\tikz\node [draw=none, fill=gray!20, rounded corners=4pt, text width=0.7\textwidth, align=left, inner sep=8pt] { {{.Text}} };
+\end{minipage}
 
 \small\textcolor{gray}{ {{.Timestamp}} }
