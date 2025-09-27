@@ -1,0 +1,187 @@
+% Custom LaTeX template for iMessages book
+% Optimized for 8.5" x 5.5" format
+
+\documentclass[10pt]{book}
+
+% Page geometry for 8.5" x 5.5" book
+\usepackage[
+    paperwidth=5.5in,
+    paperheight=8.5in,
+    margin=0.5in,
+    top=0.6in,
+    bottom=0.6in
+]{geometry}
+
+% Essential packages
+\usepackage{fontspec}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{calc}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{parskip}
+
+% Font configuration - use fonts with better Unicode support
+\setmainfont{Arial}
+\setmonofont{Courier New}
+
+% Handle Unicode characters gracefully
+\usepackage{newunicodechar}
+\newunicodechar{😂}{:D}
+\newunicodechar{😊}{:)}
+\newunicodechar{😁}{:D}
+\newunicodechar{😀}{:)}
+\newunicodechar{👍}{(thumbs up)}
+\newunicodechar{💪}{(flex)}
+\newunicodechar{🤷}{(shrug)}
+\newunicodechar{❗}{!}
+\newunicodechar{️}{}
+\newunicodechar{♂}{male}
+\newunicodechar{🏼}{}
+\newunicodechar{￼}{ } % Replace attachment character with space
+
+% Message bubble colors
+\definecolor{sentmessage}{RGB}{0, 122, 255}
+\definecolor{receivedmessage}{RGB}{229, 229, 234}
+\definecolor{timestampgray}{RGB}{142, 142, 147}
+
+% Page styling
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\thepage}
+\fancyhead[LO,RE]{\leftmark}
+\renewcommand{\headrulewidth}{0pt}
+
+% Title formatting
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titleformat{\section}
+  {\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries}{\thesubsection}{1em}{}
+
+% Custom commands for message formatting
+\newcommand{\sentmessage}[2]{%
+    \begin{flushright}
+    \colorbox{sentmessage!20}{%
+        \parbox{0.7\textwidth}{%
+            \textcolor{black}{#1}%
+        }%
+    }\\[0.1cm]
+    {\small\textcolor{timestampgray}{#2}}
+    \end{flushright}
+    \vspace{0.2cm}
+}
+
+\newcommand{\receivedmessage}[3]{%
+    \noindent
+    \colorbox{receivedmessage}{%
+        \parbox{0.7\textwidth}{%
+            \textcolor{black}{#2}%
+        }%
+    }\\[0.1cm]
+    {\small\textcolor{timestampgray}{#3}}\\[0.2cm]
+    \vspace{0.2cm}
+}
+
+% Image handling
+\usepackage{adjustbox}
+\newcommand{\messageimage}[2][3in]{%
+    \begin{center}
+    \adjustbox{width=#1,center}{%
+        \includegraphics{#2}%
+    }
+    \end{center}
+    \vspace{0.2cm}
+}
+
+% Hyperlink styling
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,
+    urlcolor=blue,
+    bookmarks=true,
+    bookmarksopen=true,
+    bookmarksopenlevel=1
+}
+
+% Table of contents formatting
+\setcounter{tocdepth}{2}
+\renewcommand{\contentsname}{Table of Contents}
+
+% Custom title page
+\renewcommand{\maketitle}{%
+    \begin{titlepage}
+        \centering
+        \vspace*{2cm}
+
+        {\Huge\bfseries $title$}
+
+        \vspace{1cm}
+
+        $if(author)$
+        {\Large $author$}
+
+        \vspace{1cm}
+        $endif$
+
+        {\large $date$}
+
+        \vfill
+
+        {\small Generated with iMessages Book Tool}
+    \end{titlepage}
+}
+
+% Copyright page
+\newcommand{\copyrightpage}{%
+    \newpage
+    \thispagestyle{empty}
+    \vspace*{\fill}
+    \begin{flushleft}
+    © $date-meta.year$ $if(author)$$author$$endif$\\[0.5cm]
+
+    This book contains personal messages and conversations.
+    All rights reserved. No part of this publication may be reproduced,
+    distributed, or transmitted in any form or by any means without
+    the prior written permission of the copyright holder.\\[0.5cm]
+
+    Generated using iMessages Book Tool.
+    \end{flushleft}
+    \newpage
+}
+
+% Document metadata
+$if(title)$
+\title{$title$}
+$endif$
+$if(author)$
+\author{$author$}
+$endif$
+$if(date)$
+\date{$date$}
+$endif$
+
+% Begin document
+\begin{document}
+
+% Title page
+\maketitle
+
+% Copyright page
+\copyrightpage
+
+% Table of contents
+\tableofcontents
+\newpage
+
+% Main content
+$body$
+
+\end{document}

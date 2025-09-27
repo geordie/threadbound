@@ -1,0 +1,66 @@
+# Compiled binaries (in root directory only)
+/imessages-book
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go build artifacts
+*.test
+*.out
+/vendor/
+
+# Data files - exclude actual message content
+*.db
+*.sqlite
+*.sqlite3
+chat.db*
+
+# Generated content and output
+*.md
+!README.md
+*.pdf
+output_*/
+Attachments/
+
+# Temporary files
+test-simple.*
+/book.*
+final-book.*
+clean-book.*
+
+# But keep template files
+!templates/*.tex
+!templates/*.css
+
+# System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# OS generated files
+Icon?
+
+# Build directories
+/build/
+/dist/
+
+# Go module cache
+go.sum
+
+# Claude Code artifacts
+.claude/
