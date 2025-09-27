@@ -208,7 +208,6 @@ func (g *Generator) writeMessageBubble(builder *strings.Builder, text string, is
 	} else {
 		// Left-aligned message (received)
 		builder.WriteString(fmt.Sprintf("\\colorbox{gray!20}{\\parbox{0.7\\textwidth}{%s}}\n", escapedText))
-		builder.WriteString(fmt.Sprintf("\\\\[0.1cm]\n"))
 		builder.WriteString(fmt.Sprintf("{\\small\\textcolor{gray}{%s}}\n\n", timeStr))
 	}
 }
