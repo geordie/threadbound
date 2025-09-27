@@ -1,9 +1,12 @@
 package markdown
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
+	"text/template"
 	"time"
 
 	"imessages-book/internal/models"
@@ -45,23 +48,55 @@ func (g *Generator) GenerateBook(messages []models.Message, handles map[int]mode
 	return builder.String()
 }
 
-// writeFrontmatter writes the YAML frontmatter
+// writeFrontmatter writes the YAML frontmatter using template file
 func (g *Generator) writeFrontmatter(builder *strings.Builder) {
-	builder.WriteString("---\n")
-	builder.WriteString(fmt.Sprintf("title: \"%s\"\n", g.config.Title))
-	if g.config.Author != "" {
-		builder.WriteString(fmt.Sprintf("author: \"%s\"\n", g.config.Author))
+	templatePath := "templates/yaml-header.yml"
+	templateContent, err := ioutil.ReadFile(templatePath)
+	if err != nil {
+		// Fallback to basic header if template file can't be read
+		builder.WriteString("---\n")
+		builder.WriteString(fmt.Sprintf("title: \"%s\"\n", g.config.Title))
+		builder.WriteString(fmt.Sprintf("date: \"%s\"\n", time.Now().Format("January 2, 2006")))
+		builder.WriteString("---\n\n")
+		return
 	}
-	builder.WriteString(fmt.Sprintf("date: \"%s\"\n", time.Now().Format("January 2, 2006")))
-	builder.WriteString("documentclass: book\n")
-	builder.WriteString("fontsize: 10pt\n")
-	builder.WriteString("geometry:\n")
-	builder.WriteString(fmt.Sprintf("  - paperwidth=%s\n", g.config.PageWidth))
-	builder.WriteString(fmt.Sprintf("  - paperheight=%s\n", g.config.PageHeight))
-	builder.WriteString("  - margin=0.5in\n")
-	builder.WriteString("mainfont: \"SF Pro Text\"\n")
-	builder.WriteString("monofont: \"SF Mono\"\n")
-	builder.WriteString("---\n\n")
+
+	tmpl, err := template.New("yaml-header").Parse(string(templateContent))
+	if err != nil {
+		// Fallback to basic header if template parsing fails
+		builder.WriteString("---\n")
+		builder.WriteString(fmt.Sprintf("title: \"%s\"\n", g.config.Title))
+		builder.WriteString(fmt.Sprintf("date: \"%s\"\n", time.Now().Format("January 2, 2006")))
+		builder.WriteString("---\n\n")
+		return
+	}
+
+	data := struct {
+		Title      string
+		Author     string
+		Date       string
+		PageWidth  string
+		PageHeight string
+	}{
+		Title:      g.config.Title,
+		Author:     g.config.Author,
+		Date:       time.Now().Format("January 2, 2006"),
+		PageWidth:  g.config.PageWidth,
+		PageHeight: g.config.PageHeight,
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		// Fallback to basic header if template execution fails
+		builder.WriteString("---\n")
+		builder.WriteString(fmt.Sprintf("title: \"%s\"\n", g.config.Title))
+		builder.WriteString(fmt.Sprintf("date: \"%s\"\n", time.Now().Format("January 2, 2006")))
+		builder.WriteString("---\n\n")
+		return
+	}
+
+	builder.WriteString(buf.String())
+	builder.WriteString("\n\n")
 }
 
 // writeTitlePage writes the title page

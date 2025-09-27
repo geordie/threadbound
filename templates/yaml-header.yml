@@ -1,0 +1,33 @@
+---
+title: "{{.Title}}"{{if .Author}}
+author: "{{.Author}}"{{end}}
+date: "{{.Date}}"
+documentclass: book
+fontsize: 10pt
+geometry:
+  - paperwidth={{.PageWidth}}
+  - paperheight={{.PageHeight}}
+  - margin=0.5in
+mainfont: Arial
+monofont: "Courier New"
+header-includes: |
+  \usepackage{float}
+  \floatplacement{figure}{H}
+  \usepackage{caption}
+  \captionsetup[figure]{
+      name=,
+      labelsep=none,
+      labelformat=empty}
+  \usepackage{tikz}
+  \newsavebox{\picbox}
+  \let\oldincludegraphics\includegraphics
+  \renewcommand{\includegraphics}[2][]{
+    \savebox{\picbox}{\oldincludegraphics[#1]{#2}}
+    \tikz\node [draw=lightgray, rounded corners=8pt, line width=0.5pt,
+      minimum width=\wd\picbox,
+      minimum height=\ht\picbox, path picture={
+        \node at (path picture bounding box.center) {
+          \usebox{\picbox}};
+      }] {};
+  }
+---
