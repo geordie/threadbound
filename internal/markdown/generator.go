@@ -17,6 +17,7 @@ type Generator struct {
 	config              *models.BookConfig
 	sentMessageTemplate     *template.Template
 	receivedMessageTemplate *template.Template
+	titlePageTemplate       *template.Template
 }
 
 // New creates a new markdown generator
@@ -46,6 +47,16 @@ func (g *Generator) loadMessageTemplates() {
 	g.receivedMessageTemplate, err = template.New("received-message").Parse(string(receivedContent))
 	if err != nil {
 		panic(fmt.Sprintf("failed to parse received message template: %v", err))
+	}
+
+	// Load title page template
+	titleContent, err := ioutil.ReadFile("templates/title-page.tex")
+	if err != nil {
+		panic(fmt.Sprintf("failed to load title page template: %v", err))
+	}
+	g.titlePageTemplate, err = template.New("title-page").Parse(string(titleContent))
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse title page template: %v", err))
 	}
 }
 
@@ -126,20 +137,30 @@ func (g *Generator) writeFrontmatter(builder *strings.Builder) {
 	builder.WriteString("\n\n")
 }
 
-// writeTitlePage writes the title page
+// writeTitlePage writes the title page using template
 func (g *Generator) writeTitlePage(builder *strings.Builder) {
-	builder.WriteString("\\begin{titlepage}\n")
-	builder.WriteString("\\centering\n")
-	builder.WriteString("\\vspace*{2cm}\n\n")
-	builder.WriteString(fmt.Sprintf("{\\Huge\\bfseries %s}\n\n", g.config.Title))
-	builder.WriteString("\\vspace{1cm}\n\n")
-	if g.config.Author != "" {
-		builder.WriteString(fmt.Sprintf("{\\Large %s}\n\n", g.config.Author))
-		builder.WriteString("\\vspace{1cm}\n\n")
+	// Use template - fail if not available
+	if g.titlePageTemplate == nil {
+		panic("title page template not loaded")
 	}
-	builder.WriteString(fmt.Sprintf("{\\large %s}\n\n", time.Now().Format("January 2, 2006")))
-	builder.WriteString("\\vfill\n")
-	builder.WriteString("\\end{titlepage}\n\n")
+
+	data := struct {
+		Title  string
+		Author string
+		Date   string
+	}{
+		Title:  g.config.Title,
+		Author: g.config.Author,
+		Date:   time.Now().Format("January 2, 2006"),
+	}
+
+	var buf bytes.Buffer
+	if err := g.titlePageTemplate.Execute(&buf, data); err != nil {
+		panic(fmt.Sprintf("failed to execute title page template: %v", err))
+	}
+
+	builder.WriteString(buf.String())
+	builder.WriteString("\n\n")
 }
 
 // writeCopyrightPage writes the copyright page
