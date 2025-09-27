@@ -81,6 +81,16 @@ func (g *Generator) loadMessageTemplates() {
 	if err != nil {
 		panic(fmt.Sprintf("failed to parse page structure template: %v", err))
 	}
+
+	// Load YAML header template
+	yamlHeaderContent, err := ioutil.ReadFile("templates/yaml-header.yml")
+	if err != nil {
+		panic(fmt.Sprintf("failed to load YAML header template: %v", err))
+	}
+	g.yamlHeaderTemplate, err = template.New("yaml-header").Parse(string(yamlHeaderContent))
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse YAML header template: %v", err))
+	}
 }
 
 // GenerateBook creates the complete markdown book
@@ -105,27 +115,11 @@ func (g *Generator) GenerateBook(messages []models.Message, handles map[int]mode
 	return builder.String()
 }
 
-// writeFrontmatter writes the YAML frontmatter using template file
+// writeFrontmatter writes the YAML frontmatter using template
 func (g *Generator) writeFrontmatter(builder *strings.Builder) {
-	templatePath := "templates/yaml-header.yml"
-	templateContent, err := ioutil.ReadFile(templatePath)
-	if err != nil {
-		// Fallback to basic header if template file can't be read
-		builder.WriteString("---\n")
-		builder.WriteString(fmt.Sprintf("title: \"%s\"\n", g.config.Title))
-		builder.WriteString(fmt.Sprintf("date: \"%s\"\n", time.Now().Format("January 2, 2006")))
-		builder.WriteString("---\n\n")
-		return
-	}
-
-	tmpl, err := template.New("yaml-header").Parse(string(templateContent))
-	if err != nil {
-		// Fallback to basic header if template parsing fails
-		builder.WriteString("---\n")
-		builder.WriteString(fmt.Sprintf("title: \"%s\"\n", g.config.Title))
-		builder.WriteString(fmt.Sprintf("date: \"%s\"\n", time.Now().Format("January 2, 2006")))
-		builder.WriteString("---\n\n")
-		return
+	// Use template - fail if not available
+	if g.yamlHeaderTemplate == nil {
+		panic("YAML header template not loaded")
 	}
 
 	data := struct {
@@ -143,13 +137,8 @@ func (g *Generator) writeFrontmatter(builder *strings.Builder) {
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		// Fallback to basic header if template execution fails
-		builder.WriteString("---\n")
-		builder.WriteString(fmt.Sprintf("title: \"%s\"\n", g.config.Title))
-		builder.WriteString(fmt.Sprintf("date: \"%s\"\n", time.Now().Format("January 2, 2006")))
-		builder.WriteString("---\n\n")
-		return
+	if err := g.yamlHeaderTemplate.Execute(&buf, data); err != nil {
+		panic(fmt.Sprintf("failed to execute YAML header template: %v", err))
 	}
 
 	builder.WriteString(buf.String())
