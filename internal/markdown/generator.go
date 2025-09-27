@@ -14,13 +14,16 @@ import (
 
 // Generator handles markdown generation
 type Generator struct {
-	config                  *models.BookConfig
-	sentMessageTemplate     *template.Template
-	receivedMessageTemplate *template.Template
-	titlePageTemplate       *template.Template
-	copyrightPageTemplate   *template.Template
-	pageStructureTemplate   *template.Template
-	yamlHeaderTemplate      *template.Template
+	config                    *models.BookConfig
+	sentMessageTemplate       *template.Template
+	receivedMessageTemplate   *template.Template
+	titlePageTemplate         *template.Template
+	copyrightPageTemplate     *template.Template
+	pageStructureTemplate     *template.Template
+	yamlHeaderTemplate        *template.Template
+	imageAttachmentTemplate   *template.Template
+	imagePlaceholderTemplate  *template.Template
+	attachmentTemplate        *template.Template
 }
 
 // New creates a new markdown generator
@@ -90,6 +93,36 @@ func (g *Generator) loadMessageTemplates() {
 	g.yamlHeaderTemplate, err = template.New("yaml-header").Parse(string(yamlHeaderContent))
 	if err != nil {
 		panic(fmt.Sprintf("failed to parse YAML header template: %v", err))
+	}
+
+	// Load image attachment template
+	imageAttachmentContent, err := ioutil.ReadFile("templates/image-attachment.tex")
+	if err != nil {
+		panic(fmt.Sprintf("failed to load image attachment template: %v", err))
+	}
+	g.imageAttachmentTemplate, err = template.New("image-attachment").Parse(string(imageAttachmentContent))
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse image attachment template: %v", err))
+	}
+
+	// Load image placeholder template
+	imagePlaceholderContent, err := ioutil.ReadFile("templates/image-placeholder.tex")
+	if err != nil {
+		panic(fmt.Sprintf("failed to load image placeholder template: %v", err))
+	}
+	g.imagePlaceholderTemplate, err = template.New("image-placeholder").Parse(string(imagePlaceholderContent))
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse image placeholder template: %v", err))
+	}
+
+	// Load attachment template
+	attachmentContent, err := ioutil.ReadFile("templates/attachment.tex")
+	if err != nil {
+		panic(fmt.Sprintf("failed to load attachment template: %v", err))
+	}
+	g.attachmentTemplate, err = template.New("attachment").Parse(string(attachmentContent))
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse attachment template: %v", err))
 	}
 }
 
@@ -352,7 +385,7 @@ func (g *Generator) escapeLaTeX(text string) string {
 	return text
 }
 
-// writeAttachments adds attachment references to the markdown
+// writeAttachments adds attachment references to the markdown using templates
 func (g *Generator) writeAttachments(builder *strings.Builder, attachments []models.Attachment) {
 	for _, att := range attachments {
 		if att.Filename != nil {
@@ -362,16 +395,81 @@ func (g *Generator) writeAttachments(builder *strings.Builder, attachments []mod
 			// Handle images
 			if isImageFile(ext) {
 				if att.ProcessedPath != "" {
-					builder.WriteString(fmt.Sprintf("![Image: %s](%s){width=2.5in}\n\n", filename, att.ProcessedPath))
+					g.writeImageAttachment(builder, filename, att.ProcessedPath)
 				} else {
-					builder.WriteString(fmt.Sprintf("*[Image: %s]*\n\n", filename))
+					g.writeImagePlaceholder(builder, filename)
 				}
 			} else {
 				// Handle other file types
-				builder.WriteString(fmt.Sprintf("*[Attachment: %s]*\n\n", filename))
+				g.writeAttachment(builder, filename)
 			}
 		}
 	}
+}
+
+// writeImageAttachment writes an image attachment with path using template
+func (g *Generator) writeImageAttachment(builder *strings.Builder, filename, path string) {
+	if g.imageAttachmentTemplate == nil {
+		panic("image attachment template not loaded")
+	}
+
+	data := struct {
+		Filename string
+		Path     string
+	}{
+		Filename: filename,
+		Path:     path,
+	}
+
+	var buf bytes.Buffer
+	if err := g.imageAttachmentTemplate.Execute(&buf, data); err != nil {
+		panic(fmt.Sprintf("failed to execute image attachment template: %v", err))
+	}
+
+	builder.WriteString(buf.String())
+	builder.WriteString("\n\n")
+}
+
+// writeImagePlaceholder writes an image placeholder using template
+func (g *Generator) writeImagePlaceholder(builder *strings.Builder, filename string) {
+	if g.imagePlaceholderTemplate == nil {
+		panic("image placeholder template not loaded")
+	}
+
+	data := struct {
+		Filename string
+	}{
+		Filename: filename,
+	}
+
+	var buf bytes.Buffer
+	if err := g.imagePlaceholderTemplate.Execute(&buf, data); err != nil {
+		panic(fmt.Sprintf("failed to execute image placeholder template: %v", err))
+	}
+
+	builder.WriteString(buf.String())
+	builder.WriteString("\n\n")
+}
+
+// writeAttachment writes a non-image attachment using template
+func (g *Generator) writeAttachment(builder *strings.Builder, filename string) {
+	if g.attachmentTemplate == nil {
+		panic("attachment template not loaded")
+	}
+
+	data := struct {
+		Filename string
+	}{
+		Filename: filename,
+	}
+
+	var buf bytes.Buffer
+	if err := g.attachmentTemplate.Execute(&buf, data); err != nil {
+		panic(fmt.Sprintf("failed to execute attachment template: %v", err))
+	}
+
+	builder.WriteString(buf.String())
+	builder.WriteString("\n\n")
 }
 
 // isImageFile checks if the file extension indicates an image
