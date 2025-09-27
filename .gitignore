@@ -23,6 +23,15 @@ chat.db*
 output_*/
 Attachments/
 
+# Converted and processed images
+**/*.jpg
+**/*.jpeg
+**/*.png
+**/*_processed.*
+!templates/**/*.jpg
+!templates/**/*.jpeg
+!templates/**/*.png
+
 # Temporary files
 test-simple.*
 /book.*

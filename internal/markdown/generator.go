@@ -204,7 +204,7 @@ func (g *Generator) writeAttachments(builder *strings.Builder, attachments []mod
 			// Handle images
 			if isImageFile(ext) {
 				if att.ProcessedPath != "" {
-					builder.WriteString(fmt.Sprintf("![Image: %s](%s){width=3in}\n\n", filename, att.ProcessedPath))
+					builder.WriteString(fmt.Sprintf("![Image: %s](%s){width=2.5in}\n\n", filename, att.ProcessedPath))
 				} else {
 					builder.WriteString(fmt.Sprintf("*[Image: %s]*\n\n", filename))
 				}
