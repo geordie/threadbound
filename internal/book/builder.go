@@ -58,6 +58,15 @@ func (b *Builder) Generate() error {
 
 	fmt.Printf("👥 Found %d contacts\n", len(handles))
 
+	// Get reactions
+	fmt.Println("👍 Loading message reactions...")
+	reactions, err := b.db.GetReactions(handles)
+	if err != nil {
+		return fmt.Errorf("failed to get reactions: %w", err)
+	}
+
+	fmt.Printf("❤️ Found reactions for %d messages\n", len(reactions))
+
 	// Process attachments for messages that have them
 	fmt.Println("📎 Processing attachments...")
 	err = b.processAttachments(messages)
@@ -68,7 +77,7 @@ func (b *Builder) Generate() error {
 	// Generate markdown
 	fmt.Println("📝 Generating markdown...")
 	generator := markdown.New(b.config)
-	markdownContent := generator.GenerateBook(messages, handles)
+	markdownContent := generator.GenerateBook(messages, handles, reactions)
 
 	// Write to file
 	err = os.WriteFile(b.config.OutputPath, []byte(markdownContent), 0644)

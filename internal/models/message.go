@@ -4,24 +4,28 @@ import "time"
 
 // Message represents an iMessage from the database
 type Message struct {
-	ID              int       `db:"ROWID"`
-	GUID            string    `db:"guid"`
-	Text            *string   `db:"text"`
-	Date            int64     `db:"date"`
-	DateRead        *int64    `db:"date_read"`
-	DateDelivered   *int64    `db:"date_delivered"`
-	IsFromMe        bool      `db:"is_from_me"`
-	IsDelivered     bool      `db:"is_delivered"`
-	IsRead          bool      `db:"is_read"`
-	HandleID        *int      `db:"handle_id"`
-	HasAttachments  bool      `db:"cache_has_attachments"`
-	Subject         *string   `db:"subject"`
-	IsAudioMessage  bool      `db:"is_audio_message"`
+	ID                    int       `db:"ROWID"`
+	GUID                  string    `db:"guid"`
+	Text                  *string   `db:"text"`
+	Date                  int64     `db:"date"`
+	DateRead              *int64    `db:"date_read"`
+	DateDelivered         *int64    `db:"date_delivered"`
+	IsFromMe              bool      `db:"is_from_me"`
+	IsDelivered           bool      `db:"is_delivered"`
+	IsRead                bool      `db:"is_read"`
+	HandleID              *int      `db:"handle_id"`
+	HasAttachments        bool      `db:"cache_has_attachments"`
+	Subject               *string   `db:"subject"`
+	IsAudioMessage        bool      `db:"is_audio_message"`
+	AssociatedMessageGUID *string   `db:"associated_message_guid"`
+	AssociatedMessageType int       `db:"associated_message_type"`
+	ItemType              int       `db:"item_type"`
 
 	// Computed fields
 	FormattedDate   time.Time
 	SenderName      string
 	Attachments     []Attachment
+	Reactions       []Reaction
 }
 
 // Attachment represents a file attachment
@@ -38,6 +42,14 @@ type Attachment struct {
 	// Computed fields
 	LocalPath   string
 	ProcessedPath string
+}
+
+// Reaction represents a message reaction/tapback
+type Reaction struct {
+	Type          int
+	SenderName    string
+	Timestamp     time.Time
+	ReactionEmoji string
 }
 
 // Handle represents a contact/phone number

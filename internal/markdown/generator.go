@@ -76,7 +76,7 @@ func (g *Generator) loadMessageTemplates() {
 }
 
 // GenerateBook creates the complete markdown book
-func (g *Generator) GenerateBook(messages []models.Message, handles map[int]models.Handle) string {
+func (g *Generator) GenerateBook(messages []models.Message, handles map[int]models.Handle, reactions map[string][]models.Reaction) string {
 	var builder strings.Builder
 
 	// YAML frontmatter
@@ -92,7 +92,7 @@ func (g *Generator) GenerateBook(messages []models.Message, handles map[int]mode
 	g.writePageStructure(&builder)
 
 	// Group messages by date for better organization
-	g.writeMessages(&builder, messages, handles)
+	g.writeMessages(&builder, messages, handles, reactions)
 
 	return builder.String()
 }
@@ -158,9 +158,11 @@ func (g *Generator) writePageStructure(builder *strings.Builder) {
 }
 
 // writeMessages writes all messages in conversation format
-func (g *Generator) writeMessages(builder *strings.Builder, messages []models.Message, handles map[int]models.Handle) {
+func (g *Generator) writeMessages(builder *strings.Builder, messages []models.Message, handles map[int]models.Handle, reactions map[string][]models.Reaction) {
 	var lastDate string
 	var lastSender string
+	var lastTimestamp string
+
 
 	for _, msg := range messages {
 		// Skip empty messages
@@ -174,6 +176,7 @@ func (g *Generator) writeMessages(builder *strings.Builder, messages []models.Me
 			builder.WriteString(fmt.Sprintf("\n## %s\n\n", currentDate))
 			lastDate = currentDate
 			lastSender = "" // Reset sender tracking for new day
+			lastTimestamp = "" // Reset timestamp tracking for new day
 		}
 
 		// Determine sender
@@ -192,17 +195,27 @@ func (g *Generator) writeMessages(builder *strings.Builder, messages []models.Me
 			}
 		}
 
-		// Only show sender name if it changed
-		if senderName != lastSender {
-			builder.WriteString(fmt.Sprintf("**%s** ", senderName))
+		// Check if we should show sender name (when it changes)
+		showSender := (senderName != lastSender)
+		if showSender {
 			lastSender = senderName
 		}
 
 		// Format time
 		timeStr := msg.FormattedDate.Format("3:04 PM")
 
+		// Check if we should show timestamp (when sender changes or timestamp changes)
+		showTimestamp := showSender || (timeStr != lastTimestamp)
+		if showTimestamp {
+			lastTimestamp = timeStr
+		}
+
+		// Get reactions for this message
+		messageReactions := reactions[msg.GUID]
+
+
 		// Write message content in conversation style
-		g.writeMessageBubble(builder, *msg.Text, msg.IsFromMe, timeStr)
+		g.writeMessageBubble(builder, *msg.Text, msg.IsFromMe, timeStr, senderName, showSender, showTimestamp, messageReactions)
 
 		// Add attachments if any
 		if msg.HasAttachments && g.config.IncludeImages {
@@ -214,28 +227,31 @@ func (g *Generator) writeMessages(builder *strings.Builder, messages []models.Me
 }
 
 // writeMessageBubble formats a single message as a conversation bubble
-func (g *Generator) writeMessageBubble(builder *strings.Builder, text string, isFromMe bool, timeStr string) {
+func (g *Generator) writeMessageBubble(builder *strings.Builder, text string, isFromMe bool, timeStr string, senderName string, showSender bool, showTimestamp bool, reactions []models.Reaction) {
 	if isFromMe {
-		g.writeSentMessageBubble(builder, text, timeStr)
+		g.writeSentMessageBubble(builder, text, timeStr, reactions)
 	} else {
-		g.writeReceivedMessageBubble(builder, text, timeStr)
+		g.writeReceivedMessageBubble(builder, text, timeStr, senderName, showSender, showTimestamp, reactions)
 	}
 }
 
 // writeSentMessageBubble formats a message sent by the user (right-aligned, blue)
-func (g *Generator) writeSentMessageBubble(builder *strings.Builder, text string, timeStr string) {
+func (g *Generator) writeSentMessageBubble(builder *strings.Builder, text string, timeStr string, reactions []models.Reaction) {
 	// Escape LaTeX special characters
 	escapedText := g.escapeLaTeX(text)
 
 	// Replace newlines with line breaks
 	escapedText = strings.ReplaceAll(escapedText, "\n", "  \n")
 
+
 	data := struct {
 		Text      string
 		Timestamp string
+		Reactions []models.Reaction
 	}{
 		Text:      escapedText,
 		Timestamp: timeStr,
+		Reactions: reactions,
 	}
 
 	result := g.executeTemplate(g.sentMessageTemplate, "sent message", data)
@@ -244,19 +260,28 @@ func (g *Generator) writeSentMessageBubble(builder *strings.Builder, text string
 }
 
 // writeReceivedMessageBubble formats a message received from others (left-aligned, gray)
-func (g *Generator) writeReceivedMessageBubble(builder *strings.Builder, text string, timeStr string) {
+func (g *Generator) writeReceivedMessageBubble(builder *strings.Builder, text string, timeStr string, senderName string, showSender bool, showTimestamp bool, reactions []models.Reaction) {
 	// Escape LaTeX special characters
 	escapedText := g.escapeLaTeX(text)
 
 	// Replace newlines with line breaks
 	escapedText = strings.ReplaceAll(escapedText, "\n", "  \n")
 
+
 	data := struct {
-		Text      string
-		Timestamp string
+		Text          string
+		Timestamp     string
+		Sender        string
+		ShowSender    bool
+		ShowTimestamp bool
+		Reactions     []models.Reaction
 	}{
-		Text:      escapedText,
-		Timestamp: timeStr,
+		Text:          escapedText,
+		Timestamp:     timeStr,
+		Sender:        senderName,
+		ShowSender:    showSender,
+		ShowTimestamp: showTimestamp,
+		Reactions:     reactions,
 	}
 
 	result := g.executeTemplate(g.receivedMessageTemplate, "received message", data)

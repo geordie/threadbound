@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"imessages-book/internal/models"
@@ -33,14 +34,16 @@ func (db *DB) Close() error {
 	return db.conn.Close()
 }
 
-// GetMessages retrieves all messages ordered by date
+// GetMessages retrieves all messages ordered by date, excluding reactions
 func (db *DB) GetMessages() ([]models.Message, error) {
 	query := `
 		SELECT
 			m.ROWID, m.guid, m.text, m.date, m.date_read, m.date_delivered,
 			m.is_from_me, m.is_delivered, m.is_read, m.handle_id,
-			m.cache_has_attachments, m.subject, m.is_audio_message
+			m.cache_has_attachments, m.subject, m.is_audio_message,
+			m.associated_message_guid, m.associated_message_type, m.item_type
 		FROM message m
+		WHERE m.associated_message_guid IS NULL
 		ORDER BY m.date ASC
 	`
 
@@ -57,6 +60,7 @@ func (db *DB) GetMessages() ([]models.Message, error) {
 			&msg.ID, &msg.GUID, &msg.Text, &msg.Date, &msg.DateRead, &msg.DateDelivered,
 			&msg.IsFromMe, &msg.IsDelivered, &msg.IsRead, &msg.HandleID,
 			&msg.HasAttachments, &msg.Subject, &msg.IsAudioMessage,
+			&msg.AssociatedMessageGUID, &msg.AssociatedMessageType, &msg.ItemType,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan message: %w", err)
@@ -141,6 +145,101 @@ func (db *DB) GetHandles() (map[int]models.Handle, error) {
 	}
 
 	return handles, rows.Err()
+}
+
+// GetReactions retrieves all reactions keyed by the original message GUID
+func (db *DB) GetReactions(handles map[int]models.Handle) (map[string][]models.Reaction, error) {
+	query := `
+		SELECT
+			m.associated_message_guid, m.associated_message_type, m.date,
+			m.handle_id, m.is_from_me
+		FROM message m
+		WHERE m.associated_message_guid IS NOT NULL
+		ORDER BY m.date ASC
+	`
+
+	rows, err := db.conn.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query reactions: %w", err)
+	}
+	defer rows.Close()
+
+	reactions := make(map[string][]models.Reaction)
+	for rows.Next() {
+		var associatedGUID string
+		var reactionType int
+		var date int64
+		var handleID *int
+		var isFromMe bool
+
+		err := rows.Scan(&associatedGUID, &reactionType, &date, &handleID, &isFromMe)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan reaction: %w", err)
+		}
+
+		// Extract the actual UUID from the associated_message_guid field
+		// Format is like "p:0/BB33CAD3-02F1-4226-9AB8-3D0BF5A9D1E1"
+		originalGUID := associatedGUID
+		if len(associatedGUID) > 3 && (associatedGUID[:3] == "p:0" || associatedGUID[:3] == "p:1") {
+			slashIndex := strings.Index(associatedGUID, "/")
+			if slashIndex != -1 && slashIndex+1 < len(associatedGUID) {
+				originalGUID = associatedGUID[slashIndex+1:]
+			}
+		}
+
+		// Convert Apple's timestamp to Go time
+		appleEpoch := time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)
+		timestamp := appleEpoch.Add(time.Duration(date) * time.Nanosecond)
+
+		// Determine sender name
+		var senderName string
+		if isFromMe {
+			senderName = "Me"
+		} else {
+			if handleID != nil {
+				if handle, exists := handles[*handleID]; exists {
+					senderName = handle.DisplayName
+				} else {
+					senderName = "Unknown"
+				}
+			} else {
+				senderName = "Unknown"
+			}
+		}
+
+		reaction := models.Reaction{
+			Type:          reactionType,
+			SenderName:    senderName,
+			Timestamp:     timestamp,
+			ReactionEmoji: reactionTypeToEmoji(reactionType),
+		}
+
+		reactions[originalGUID] = append(reactions[originalGUID], reaction)
+	}
+
+	return reactions, rows.Err()
+}
+
+// reactionTypeToEmoji converts iMessage reaction types to LaTeX emoji commands
+func reactionTypeToEmoji(reactionType int) string {
+	switch reactionType {
+	case 2000:
+		return "{\\emojifont\\symbol{\"2764}}" // Love
+	case 2001:
+		return "{\\emojifont\\symbol{\"1F44D}}" // Like/Thumbs up
+	case 2002:
+		return "{\\emojifont\\symbol{\"1F44E}}" // Dislike/Thumbs down
+	case 2003:
+		return "{\\emojifont\\symbol{\"1F602}}" // Laugh/Ha ha
+	case 2004:
+		return "{\\emojifont\\symbol{\"2757}}" // Emphasize/!!
+	case 2005:
+		return "{\\emojifont\\symbol{\"2764}}" // Love (alternative)
+	case 2006:
+		return "{\\emojifont\\symbol{\"2753}}" // Question/?
+	default:
+		return "{\\emojifont\\symbol{\"2764}}" // Default fallback
+	}
 }
 
 // GetChatInfo retrieves basic chat information
