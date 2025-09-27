@@ -39,6 +39,8 @@ func init() {
 	generateCmd.Flags().StringVar(&config.OutputPath, "output", "book.md", "Output markdown file")
 	generateCmd.Flags().StringVar(&config.Title, "title", "Our Messages", "Book title")
 	generateCmd.Flags().StringVar(&config.Author, "author", "", "Book author")
+	generateCmd.Flags().StringVar(&config.PageWidth, "page-width", "5.5in", "Page width")
+	generateCmd.Flags().StringVar(&config.PageHeight, "page-height", "8.5in", "Page height")
 	generateCmd.Flags().BoolVar(&config.IncludeImages, "include-images", true, "Include images in output")
 	generateCmd.Flags().BoolVar(&config.IncludePreviews, "include-previews", false, "Generate link previews")
 

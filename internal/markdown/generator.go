@@ -33,97 +33,46 @@ func New(config *models.BookConfig) *Generator {
 	return g
 }
 
-// loadMessageTemplates loads the message bubble templates
+// loadTemplate loads and parses a single template file
+func (g *Generator) loadTemplate(filename, templateName string) *template.Template {
+	content, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panic(fmt.Sprintf("failed to load %s template: %v", templateName, err))
+	}
+
+	tmpl, err := template.New(templateName).Parse(string(content))
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse %s template: %v", templateName, err))
+	}
+
+	return tmpl
+}
+
+// executeTemplate executes a template with data and returns the result
+func (g *Generator) executeTemplate(tmpl *template.Template, templateName string, data interface{}) string {
+	if tmpl == nil {
+		panic(fmt.Sprintf("%s template not loaded", templateName))
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		panic(fmt.Sprintf("failed to execute %s template: %v", templateName, err))
+	}
+
+	return buf.String()
+}
+
+// loadMessageTemplates loads all templates
 func (g *Generator) loadMessageTemplates() {
-	// Load sent message template
-	sentContent, err := ioutil.ReadFile("templates/sent-message.tex")
-	if err != nil {
-		panic(fmt.Sprintf("failed to load sent message template: %v", err))
-	}
-	g.sentMessageTemplate, err = template.New("sent-message").Parse(string(sentContent))
-	if err != nil {
-		panic(fmt.Sprintf("failed to parse sent message template: %v", err))
-	}
-
-	// Load received message template
-	receivedContent, err := ioutil.ReadFile("templates/received-message.tex")
-	if err != nil {
-		panic(fmt.Sprintf("failed to load received message template: %v", err))
-	}
-	g.receivedMessageTemplate, err = template.New("received-message").Parse(string(receivedContent))
-	if err != nil {
-		panic(fmt.Sprintf("failed to parse received message template: %v", err))
-	}
-
-	// Load title page template
-	titleContent, err := ioutil.ReadFile("templates/title-page.tex")
-	if err != nil {
-		panic(fmt.Sprintf("failed to load title page template: %v", err))
-	}
-	g.titlePageTemplate, err = template.New("title-page").Parse(string(titleContent))
-	if err != nil {
-		panic(fmt.Sprintf("failed to parse title page template: %v", err))
-	}
-
-	// Load copyright page template
-	copyrightContent, err := ioutil.ReadFile("templates/copyright-page.tex")
-	if err != nil {
-		panic(fmt.Sprintf("failed to load copyright page template: %v", err))
-	}
-	g.copyrightPageTemplate, err = template.New("copyright-page").Parse(string(copyrightContent))
-	if err != nil {
-		panic(fmt.Sprintf("failed to parse copyright page template: %v", err))
-	}
-
-	// Load page structure template
-	pageStructureContent, err := ioutil.ReadFile("templates/page-structure.tex")
-	if err != nil {
-		panic(fmt.Sprintf("failed to load page structure template: %v", err))
-	}
-	g.pageStructureTemplate, err = template.New("page-structure").Parse(string(pageStructureContent))
-	if err != nil {
-		panic(fmt.Sprintf("failed to parse page structure template: %v", err))
-	}
-
-	// Load YAML header template
-	yamlHeaderContent, err := ioutil.ReadFile("templates/yaml-header.yml")
-	if err != nil {
-		panic(fmt.Sprintf("failed to load YAML header template: %v", err))
-	}
-	g.yamlHeaderTemplate, err = template.New("yaml-header").Parse(string(yamlHeaderContent))
-	if err != nil {
-		panic(fmt.Sprintf("failed to parse YAML header template: %v", err))
-	}
-
-	// Load image attachment template
-	imageAttachmentContent, err := ioutil.ReadFile("templates/image-attachment.tex")
-	if err != nil {
-		panic(fmt.Sprintf("failed to load image attachment template: %v", err))
-	}
-	g.imageAttachmentTemplate, err = template.New("image-attachment").Parse(string(imageAttachmentContent))
-	if err != nil {
-		panic(fmt.Sprintf("failed to parse image attachment template: %v", err))
-	}
-
-	// Load image placeholder template
-	imagePlaceholderContent, err := ioutil.ReadFile("templates/image-placeholder.tex")
-	if err != nil {
-		panic(fmt.Sprintf("failed to load image placeholder template: %v", err))
-	}
-	g.imagePlaceholderTemplate, err = template.New("image-placeholder").Parse(string(imagePlaceholderContent))
-	if err != nil {
-		panic(fmt.Sprintf("failed to parse image placeholder template: %v", err))
-	}
-
-	// Load attachment template
-	attachmentContent, err := ioutil.ReadFile("templates/attachment.tex")
-	if err != nil {
-		panic(fmt.Sprintf("failed to load attachment template: %v", err))
-	}
-	g.attachmentTemplate, err = template.New("attachment").Parse(string(attachmentContent))
-	if err != nil {
-		panic(fmt.Sprintf("failed to parse attachment template: %v", err))
-	}
+	g.sentMessageTemplate = g.loadTemplate("templates/sent-message.tex", "sent-message")
+	g.receivedMessageTemplate = g.loadTemplate("templates/received-message.tex", "received-message")
+	g.titlePageTemplate = g.loadTemplate("templates/title-page.tex", "title-page")
+	g.copyrightPageTemplate = g.loadTemplate("templates/copyright-page.tex", "copyright-page")
+	g.pageStructureTemplate = g.loadTemplate("templates/page-structure.tex", "page-structure")
+	g.yamlHeaderTemplate = g.loadTemplate("templates/yaml-header.yml", "yaml-header")
+	g.imageAttachmentTemplate = g.loadTemplate("templates/image-attachment.tex", "image-attachment")
+	g.imagePlaceholderTemplate = g.loadTemplate("templates/image-placeholder.tex", "image-placeholder")
+	g.attachmentTemplate = g.loadTemplate("templates/attachment.tex", "attachment")
 }
 
 // GenerateBook creates the complete markdown book
@@ -150,11 +99,6 @@ func (g *Generator) GenerateBook(messages []models.Message, handles map[int]mode
 
 // writeFrontmatter writes the YAML frontmatter using template
 func (g *Generator) writeFrontmatter(builder *strings.Builder) {
-	// Use template - fail if not available
-	if g.yamlHeaderTemplate == nil {
-		panic("YAML header template not loaded")
-	}
-
 	data := struct {
 		Title      string
 		Author     string
@@ -169,22 +113,13 @@ func (g *Generator) writeFrontmatter(builder *strings.Builder) {
 		PageHeight: g.config.PageHeight,
 	}
 
-	var buf bytes.Buffer
-	if err := g.yamlHeaderTemplate.Execute(&buf, data); err != nil {
-		panic(fmt.Sprintf("failed to execute YAML header template: %v", err))
-	}
-
-	builder.WriteString(buf.String())
+	result := g.executeTemplate(g.yamlHeaderTemplate, "YAML header", data)
+	builder.WriteString(result)
 	builder.WriteString("\n\n")
 }
 
 // writeTitlePage writes the title page using template
 func (g *Generator) writeTitlePage(builder *strings.Builder) {
-	// Use template - fail if not available
-	if g.titlePageTemplate == nil {
-		panic("title page template not loaded")
-	}
-
 	data := struct {
 		Title  string
 		Author string
@@ -195,22 +130,13 @@ func (g *Generator) writeTitlePage(builder *strings.Builder) {
 		Date:   time.Now().Format("January 2, 2006"),
 	}
 
-	var buf bytes.Buffer
-	if err := g.titlePageTemplate.Execute(&buf, data); err != nil {
-		panic(fmt.Sprintf("failed to execute title page template: %v", err))
-	}
-
-	builder.WriteString(buf.String())
+	result := g.executeTemplate(g.titlePageTemplate, "title page", data)
+	builder.WriteString(result)
 	builder.WriteString("\n\n")
 }
 
 // writeCopyrightPage writes the copyright page using template
 func (g *Generator) writeCopyrightPage(builder *strings.Builder) {
-	// Use template - fail if not available
-	if g.copyrightPageTemplate == nil {
-		panic("copyright page template not loaded")
-	}
-
 	data := struct {
 		Year   int
 		Author string
@@ -219,28 +145,15 @@ func (g *Generator) writeCopyrightPage(builder *strings.Builder) {
 		Author: g.config.Author,
 	}
 
-	var buf bytes.Buffer
-	if err := g.copyrightPageTemplate.Execute(&buf, data); err != nil {
-		panic(fmt.Sprintf("failed to execute copyright page template: %v", err))
-	}
-
-	builder.WriteString(buf.String())
+	result := g.executeTemplate(g.copyrightPageTemplate, "copyright page", data)
+	builder.WriteString(result)
 	builder.WriteString("\n\n")
 }
 
 // writePageStructure writes the table of contents and page structure using template
 func (g *Generator) writePageStructure(builder *strings.Builder) {
-	// Use template - fail if not available
-	if g.pageStructureTemplate == nil {
-		panic("page structure template not loaded")
-	}
-
-	var buf bytes.Buffer
-	if err := g.pageStructureTemplate.Execute(&buf, nil); err != nil {
-		panic(fmt.Sprintf("failed to execute page structure template: %v", err))
-	}
-
-	builder.WriteString(buf.String())
+	result := g.executeTemplate(g.pageStructureTemplate, "page structure", nil)
+	builder.WriteString(result)
 	builder.WriteString("\n\n")
 }
 
@@ -317,11 +230,6 @@ func (g *Generator) writeSentMessageBubble(builder *strings.Builder, text string
 	// Replace newlines with line breaks
 	escapedText = strings.ReplaceAll(escapedText, "\n", "  \n")
 
-	// Use template - fail if not available
-	if g.sentMessageTemplate == nil {
-		panic("sent message template not loaded")
-	}
-
 	data := struct {
 		Text      string
 		Timestamp string
@@ -330,12 +238,8 @@ func (g *Generator) writeSentMessageBubble(builder *strings.Builder, text string
 		Timestamp: timeStr,
 	}
 
-	var buf bytes.Buffer
-	if err := g.sentMessageTemplate.Execute(&buf, data); err != nil {
-		panic(fmt.Sprintf("failed to execute sent message template: %v", err))
-	}
-
-	builder.WriteString(buf.String())
+	result := g.executeTemplate(g.sentMessageTemplate, "sent message", data)
+	builder.WriteString(result)
 	builder.WriteString("\n\n")
 }
 
@@ -347,11 +251,6 @@ func (g *Generator) writeReceivedMessageBubble(builder *strings.Builder, text st
 	// Replace newlines with line breaks
 	escapedText = strings.ReplaceAll(escapedText, "\n", "  \n")
 
-	// Use template - fail if not available
-	if g.receivedMessageTemplate == nil {
-		panic("received message template not loaded")
-	}
-
 	data := struct {
 		Text      string
 		Timestamp string
@@ -360,12 +259,8 @@ func (g *Generator) writeReceivedMessageBubble(builder *strings.Builder, text st
 		Timestamp: timeStr,
 	}
 
-	var buf bytes.Buffer
-	if err := g.receivedMessageTemplate.Execute(&buf, data); err != nil {
-		panic(fmt.Sprintf("failed to execute received message template: %v", err))
-	}
-
-	builder.WriteString(buf.String())
+	result := g.executeTemplate(g.receivedMessageTemplate, "received message", data)
+	builder.WriteString(result)
 	builder.WriteString("\n\n")
 }
 
@@ -409,10 +304,6 @@ func (g *Generator) writeAttachments(builder *strings.Builder, attachments []mod
 
 // writeImageAttachment writes an image attachment with path using template
 func (g *Generator) writeImageAttachment(builder *strings.Builder, filename, path string) {
-	if g.imageAttachmentTemplate == nil {
-		panic("image attachment template not loaded")
-	}
-
 	data := struct {
 		Filename string
 		Path     string
@@ -421,54 +312,34 @@ func (g *Generator) writeImageAttachment(builder *strings.Builder, filename, pat
 		Path:     path,
 	}
 
-	var buf bytes.Buffer
-	if err := g.imageAttachmentTemplate.Execute(&buf, data); err != nil {
-		panic(fmt.Sprintf("failed to execute image attachment template: %v", err))
-	}
-
-	builder.WriteString(buf.String())
+	result := g.executeTemplate(g.imageAttachmentTemplate, "image attachment", data)
+	builder.WriteString(result)
 	builder.WriteString("\n\n")
 }
 
 // writeImagePlaceholder writes an image placeholder using template
 func (g *Generator) writeImagePlaceholder(builder *strings.Builder, filename string) {
-	if g.imagePlaceholderTemplate == nil {
-		panic("image placeholder template not loaded")
-	}
-
 	data := struct {
 		Filename string
 	}{
 		Filename: filename,
 	}
 
-	var buf bytes.Buffer
-	if err := g.imagePlaceholderTemplate.Execute(&buf, data); err != nil {
-		panic(fmt.Sprintf("failed to execute image placeholder template: %v", err))
-	}
-
-	builder.WriteString(buf.String())
+	result := g.executeTemplate(g.imagePlaceholderTemplate, "image placeholder", data)
+	builder.WriteString(result)
 	builder.WriteString("\n\n")
 }
 
 // writeAttachment writes a non-image attachment using template
 func (g *Generator) writeAttachment(builder *strings.Builder, filename string) {
-	if g.attachmentTemplate == nil {
-		panic("attachment template not loaded")
-	}
-
 	data := struct {
 		Filename string
 	}{
 		Filename: filename,
 	}
 
-	var buf bytes.Buffer
-	if err := g.attachmentTemplate.Execute(&buf, data); err != nil {
-		panic(fmt.Sprintf("failed to execute attachment template: %v", err))
-	}
-
-	builder.WriteString(buf.String())
+	result := g.executeTemplate(g.attachmentTemplate, "attachment", data)
+	builder.WriteString(result)
 	builder.WriteString("\n\n")
 }
 
