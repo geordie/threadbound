@@ -14,12 +14,39 @@ import (
 
 // Generator handles markdown generation
 type Generator struct {
-	config *models.BookConfig
+	config              *models.BookConfig
+	sentMessageTemplate     *template.Template
+	receivedMessageTemplate *template.Template
 }
 
 // New creates a new markdown generator
 func New(config *models.BookConfig) *Generator {
-	return &Generator{config: config}
+	g := &Generator{config: config}
+	g.loadMessageTemplates()
+	return g
+}
+
+// loadMessageTemplates loads the message bubble templates
+func (g *Generator) loadMessageTemplates() {
+	// Load sent message template
+	sentContent, err := ioutil.ReadFile("templates/sent-message.tex")
+	if err != nil {
+		panic(fmt.Sprintf("failed to load sent message template: %v", err))
+	}
+	g.sentMessageTemplate, err = template.New("sent-message").Parse(string(sentContent))
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse sent message template: %v", err))
+	}
+
+	// Load received message template
+	receivedContent, err := ioutil.ReadFile("templates/received-message.tex")
+	if err != nil {
+		panic(fmt.Sprintf("failed to load received message template: %v", err))
+	}
+	g.receivedMessageTemplate, err = template.New("received-message").Parse(string(receivedContent))
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse received message template: %v", err))
+	}
 }
 
 // GenerateBook creates the complete markdown book
@@ -192,24 +219,71 @@ func (g *Generator) writeMessages(builder *strings.Builder, messages []models.Me
 
 // writeMessageBubble formats a single message as a conversation bubble
 func (g *Generator) writeMessageBubble(builder *strings.Builder, text string, isFromMe bool, timeStr string) {
-	// Escape LaTeX special characters instead of HTML
+	if isFromMe {
+		g.writeSentMessageBubble(builder, text, timeStr)
+	} else {
+		g.writeReceivedMessageBubble(builder, text, timeStr)
+	}
+}
+
+// writeSentMessageBubble formats a message sent by the user (right-aligned, blue)
+func (g *Generator) writeSentMessageBubble(builder *strings.Builder, text string, timeStr string) {
+	// Escape LaTeX special characters
 	escapedText := g.escapeLaTeX(text)
 
 	// Replace newlines with line breaks
 	escapedText = strings.ReplaceAll(escapedText, "\n", "  \n")
 
-	if isFromMe {
-		// Right-aligned message (sent)
-		builder.WriteString(fmt.Sprintf("\\begin{flushright}\n"))
-		builder.WriteString(fmt.Sprintf("\\colorbox{blue!20}{\\parbox{0.7\\textwidth}{%s}}\n", escapedText))
-		builder.WriteString(fmt.Sprintf("\\\\[0.1cm]\n"))
-		builder.WriteString(fmt.Sprintf("{\\small\\textcolor{gray}{%s}}\n", timeStr))
-		builder.WriteString(fmt.Sprintf("\\end{flushright}\n\n"))
-	} else {
-		// Left-aligned message (received)
-		builder.WriteString(fmt.Sprintf("\\colorbox{gray!20}{\\parbox{0.7\\textwidth}{%s}}\n", escapedText))
-		builder.WriteString(fmt.Sprintf("{\\small\\textcolor{gray}{%s}}\n\n", timeStr))
+	// Use template - fail if not available
+	if g.sentMessageTemplate == nil {
+		panic("sent message template not loaded")
 	}
+
+	data := struct {
+		Text      string
+		Timestamp string
+	}{
+		Text:      escapedText,
+		Timestamp: timeStr,
+	}
+
+	var buf bytes.Buffer
+	if err := g.sentMessageTemplate.Execute(&buf, data); err != nil {
+		panic(fmt.Sprintf("failed to execute sent message template: %v", err))
+	}
+
+	builder.WriteString(buf.String())
+	builder.WriteString("\n\n")
+}
+
+// writeReceivedMessageBubble formats a message received from others (left-aligned, gray)
+func (g *Generator) writeReceivedMessageBubble(builder *strings.Builder, text string, timeStr string) {
+	// Escape LaTeX special characters
+	escapedText := g.escapeLaTeX(text)
+
+	// Replace newlines with line breaks
+	escapedText = strings.ReplaceAll(escapedText, "\n", "  \n")
+
+	// Use template - fail if not available
+	if g.receivedMessageTemplate == nil {
+		panic("received message template not loaded")
+	}
+
+	data := struct {
+		Text      string
+		Timestamp string
+	}{
+		Text:      escapedText,
+		Timestamp: timeStr,
+	}
+
+	var buf bytes.Buffer
+	if err := g.receivedMessageTemplate.Execute(&buf, data); err != nil {
+		panic(fmt.Sprintf("failed to execute received message template: %v", err))
+	}
+
+	builder.WriteString(buf.String())
+	builder.WriteString("\n\n")
 }
 
 // escapeLaTeX escapes special LaTeX characters
