@@ -25,122 +25,16 @@
 \usepackage{titlesec}
 \usepackage{hyperref}
 \usepackage{parskip}
+\usepackage{tikz}
 
 % Font configuration - use fonts with better Unicode support
 \setmainfont{Arial}
 \setmonofont{Courier New}
 
-% Configure monochrome emoji support using Symbola font
-\newfontfamily\emojifont{Symbola}[Scale=0.9]
-
-% Handle Unicode characters with monochrome emoji glyphs from Symbola
+% Emoji support setup
 \usepackage{newunicodechar}
-% Common emoji mappings - using actual monochrome emoji glyphs
-\newunicodechar{😀}{{\emojifont\symbol{"1F600}}}
-\newunicodechar{😁}{{\emojifont\symbol{"1F601}}}
-\newunicodechar{😂}{{\emojifont\symbol{"1F602}}}
-\newunicodechar{😃}{{\emojifont\symbol{"1F603}}}
-\newunicodechar{😄}{{\emojifont\symbol{"1F604}}}
-\newunicodechar{😅}{{\emojifont\symbol{"1F605}}}
-\newunicodechar{😆}{{\emojifont\symbol{"1F606}}}
-\newunicodechar{😇}{{\emojifont\symbol{"1F607}}}
-\newunicodechar{😈}{{\emojifont\symbol{"1F608}}}
-\newunicodechar{😉}{{\emojifont\symbol{"1F609}}}
-\newunicodechar{😊}{{\emojifont\symbol{"1F60A}}}
-\newunicodechar{😋}{{\emojifont\symbol{"1F60B}}}
-\newunicodechar{😌}{{\emojifont\symbol{"1F60C}}}
-\newunicodechar{😍}{{\emojifont\symbol{"1F60D}}}
-\newunicodechar{😎}{{\emojifont\symbol{"1F60E}}}
-\newunicodechar{😏}{{\emojifont\symbol{"1F60F}}}
-\newunicodechar{😐}{{\emojifont\symbol{"1F610}}}
-\newunicodechar{😑}{{\emojifont\symbol{"1F611}}}
-\newunicodechar{😒}{{\emojifont\symbol{"1F612}}}
-\newunicodechar{😓}{{\emojifont\symbol{"1F613}}}
-\newunicodechar{😔}{{\emojifont\symbol{"1F614}}}
-\newunicodechar{😕}{{\emojifont\symbol{"1F615}}}
-\newunicodechar{😖}{{\emojifont\symbol{"1F616}}}
-\newunicodechar{😗}{{\emojifont\symbol{"1F617}}}
-\newunicodechar{😘}{{\emojifont\symbol{"1F618}}}
-\newunicodechar{😙}{{\emojifont\symbol{"1F619}}}
-\newunicodechar{😚}{{\emojifont\symbol{"1F61A}}}
-\newunicodechar{😛}{{\emojifont\symbol{"1F61B}}}
-\newunicodechar{😜}{{\emojifont\symbol{"1F61C}}}
-\newunicodechar{😝}{{\emojifont\symbol{"1F61D}}}
-\newunicodechar{😞}{{\emojifont\symbol{"1F61E}}}
-\newunicodechar{😟}{{\emojifont\symbol{"1F61F}}}
-\newunicodechar{😠}{{\emojifont\symbol{"1F620}}}
-\newunicodechar{😡}{{\emojifont\symbol{"1F621}}}
-\newunicodechar{😢}{{\emojifont\symbol{"1F622}}}
-\newunicodechar{😣}{{\emojifont\symbol{"1F623}}}
-\newunicodechar{😤}{{\emojifont\symbol{"1F624}}}
-\newunicodechar{😥}{{\emojifont\symbol{"1F625}}}
-\newunicodechar{😦}{{\emojifont\symbol{"1F626}}}
-\newunicodechar{😧}{{\emojifont\symbol{"1F627}}}
-\newunicodechar{😨}{{\emojifont\symbol{"1F628}}}
-\newunicodechar{😩}{{\emojifont\symbol{"1F629}}}
-\newunicodechar{😪}{{\emojifont\symbol{"1F62A}}}
-\newunicodechar{😫}{{\emojifont\symbol{"1F62B}}}
-\newunicodechar{😬}{{\emojifont\symbol{"1F62C}}}
-\newunicodechar{😭}{{\emojifont\symbol{"1F62D}}}
-\newunicodechar{😮}{{\emojifont\symbol{"1F62E}}}
-\newunicodechar{😯}{{\emojifont\symbol{"1F62F}}}
-\newunicodechar{😰}{{\emojifont\symbol{"1F630}}}
-\newunicodechar{😱}{{\emojifont\symbol{"1F631}}}
-\newunicodechar{😲}{{\emojifont\symbol{"1F632}}}
-\newunicodechar{😳}{{\emojifont\symbol{"1F633}}}
-\newunicodechar{😴}{{\emojifont\symbol{"1F634}}}
-\newunicodechar{😵}{{\emojifont\symbol{"1F635}}}
-\newunicodechar{😶}{{\emojifont\symbol{"1F636}}}
-\newunicodechar{😷}{{\emojifont\symbol{"1F637}}}
-\newunicodechar{😸}{{\emojifont\symbol{"1F638}}}
-\newunicodechar{😹}{{\emojifont\symbol{"1F639}}}
-\newunicodechar{😺}{{\emojifont\symbol{"1F63A}}}
-\newunicodechar{😻}{{\emojifont\symbol{"1F63B}}}
-\newunicodechar{😼}{{\emojifont\symbol{"1F63C}}}
-\newunicodechar{😽}{{\emojifont\symbol{"1F63D}}}
-\newunicodechar{😾}{{\emojifont\symbol{"1F63E}}}
-\newunicodechar{😿}{{\emojifont\symbol{"1F63F}}}
-\newunicodechar{🙀}{{\emojifont\symbol{"1F640}}}
-\newunicodechar{🙁}{{\emojifont\symbol{"1F641}}}
-\newunicodechar{🙂}{{\emojifont\symbol{"1F642}}}
-\newunicodechar{🙃}{{\emojifont\symbol{"1F643}}}
-\newunicodechar{🙄}{{\emojifont\symbol{"1F644}}}
-\newunicodechar{🤣}{{\emojifont\symbol{"1F923}}}
-% Hand gestures and people
-\newunicodechar{👍}{{\emojifont\symbol{"1F44D}}}
-\newunicodechar{👎}{{\emojifont\symbol{"1F44E}}}
-\newunicodechar{👌}{{\emojifont\symbol{"1F44C}}}
-\newunicodechar{👏}{{\emojifont\symbol{"1F44F}}}
-\newunicodechar{👋}{{\emojifont\symbol{"1F44B}}}
-\newunicodechar{🤝}{{\emojifont\symbol{"1F91D}}}
-\newunicodechar{🙏}{{\emojifont\symbol{"1F64F}}}
-\newunicodechar{💪}{{\emojifont\symbol{"1F4AA}}}
-% Hearts and symbols
-\newunicodechar{❤}{{\emojifont\symbol{"2764}}}
-\newunicodechar{💕}{{\emojifont\symbol{"1F495}}}
-\newunicodechar{💖}{{\emojifont\symbol{"1F496}}}
-\newunicodechar{💗}{{\emojifont\symbol{"1F497}}}
-\newunicodechar{💘}{{\emojifont\symbol{"1F498}}}
-\newunicodechar{💙}{{\emojifont\symbol{"1F499}}}
-\newunicodechar{💚}{{\emojifont\symbol{"1F49A}}}
-\newunicodechar{💛}{{\emojifont\symbol{"1F49B}}}
-\newunicodechar{💜}{{\emojifont\symbol{"1F49C}}}
-\newunicodechar{💝}{{\emojifont\symbol{"1F49D}}}
-\newunicodechar{💞}{{\emojifont\symbol{"1F49E}}}
-\newunicodechar{💟}{{\emojifont\symbol{"1F49F}}}
-\newunicodechar{❗}{{\emojifont\symbol{"2757}}}
-\newunicodechar{❓}{{\emojifont\symbol{"2753}}}
-\newunicodechar{⭐}{{\emojifont\symbol{"2B50}}}
-% Special characters and modifiers
-\newunicodechar{️}{} % Variation selector
-\newunicodechar{♂}{{\emojifont\symbol{"2642}}}
-\newunicodechar{♀}{{\emojifont\symbol{"2640}}}
-\newunicodechar{🏼}{} % Skin tone modifier - ignore for monochrome
-\newunicodechar{🏻}{} % Skin tone modifier - ignore for monochrome
-\newunicodechar{🏽}{} % Skin tone modifier - ignore for monochrome
-\newunicodechar{🏾}{} % Skin tone modifier - ignore for monochrome
-\newunicodechar{🏿}{} % Skin tone modifier - ignore for monochrome
-\newunicodechar{￼}{} % Remove attachment character entirely
+\newfontfamily\emojifont{Symbola}
+\InputIfFileExists{templates/emoji-definitions.tex}{}{}
 
 % Message bubble colors
 \definecolor{sentmessage}{RGB}{0, 122, 255}
@@ -218,7 +112,7 @@
 }
 
 % Table of contents formatting
-\setcounter{tocdepth}{2}
+\setcounter{tocdepth}{1}
 \renewcommand{\contentsname}{Table of Contents}
 
 % Custom title page

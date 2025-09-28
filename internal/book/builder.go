@@ -76,7 +76,7 @@ func (b *Builder) Generate() error {
 
 	// Generate markdown
 	fmt.Println("📝 Generating markdown...")
-	generator := markdown.New(b.config)
+	generator := markdown.New(b.config, b.db.GetConnection())
 	markdownContent := generator.GenerateBook(messages, handles, reactions)
 
 	// Write to file

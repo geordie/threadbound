@@ -34,6 +34,11 @@ func (db *DB) Close() error {
 	return db.conn.Close()
 }
 
+// GetConnection returns the underlying sql.DB connection
+func (db *DB) GetConnection() *sql.DB {
+	return db.conn
+}
+
 // GetMessages retrieves all messages ordered by date, excluding reactions
 func (db *DB) GetMessages() ([]models.Message, error) {
 	query := `

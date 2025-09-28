@@ -4,6 +4,7 @@ author: "{{.Author}}"{{end}}
 date: "{{.Date}}"
 documentclass: book
 fontsize: 10pt
+toc-depth: 1
 geometry:
   - paperwidth={{.PageWidth}}
   - paperheight={{.PageHeight}}
@@ -35,4 +36,5 @@ header-includes: |
   \newfontfamily\emojifont{Symbola}
   \usepackage{newunicodechar}
   \newunicodechar{￼}{}
+  \InputIfFileExists{templates/url-setup.tex}{}{}
 ---

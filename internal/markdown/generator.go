@@ -2,19 +2,23 @@ package markdown
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
 
 	"imessages-book/internal/models"
+	"imessages-book/internal/urlprocessor"
 )
 
 // Generator handles markdown generation
 type Generator struct {
 	config                    *models.BookConfig
+	urlProcessor              *urlprocessor.URLProcessor
 	sentMessageTemplate       *template.Template
 	receivedMessageTemplate   *template.Template
 	titlePageTemplate         *template.Template
@@ -27,8 +31,11 @@ type Generator struct {
 }
 
 // New creates a new markdown generator
-func New(config *models.BookConfig) *Generator {
-	g := &Generator{config: config}
+func New(config *models.BookConfig, db *sql.DB) *Generator {
+	g := &Generator{
+		config:       config,
+		urlProcessor: urlprocessor.New(config, db),
+	}
 	g.loadMessageTemplates()
 	return g
 }
@@ -79,8 +86,14 @@ func (g *Generator) loadMessageTemplates() {
 func (g *Generator) GenerateBook(messages []models.Message, handles map[int]models.Handle, reactions map[string][]models.Reaction) string {
 	var builder strings.Builder
 
+	// Process URLs first if enabled
+	var urlThumbnails map[string]*urlprocessor.URLThumbnail
+	if g.config.IncludePreviews {
+		urlThumbnails = g.processAllURLs(messages)
+	}
+
 	// YAML frontmatter
-	g.writeFrontmatter(&builder)
+	g.writeFrontmatter(&builder, urlThumbnails)
 
 	// Title page
 	g.writeTitlePage(&builder)
@@ -92,13 +105,95 @@ func (g *Generator) GenerateBook(messages []models.Message, handles map[int]mode
 	g.writePageStructure(&builder)
 
 	// Group messages by date for better organization
-	g.writeMessages(&builder, messages, handles, reactions)
+	g.writeMessages(&builder, messages, handles, reactions, urlThumbnails)
 
 	return builder.String()
 }
 
+// processAllURLs finds and processes all URLs in messages using existing iMessage preview data
+func (g *Generator) processAllURLs(messages []models.Message) map[string]*urlprocessor.URLThumbnail {
+	fmt.Printf("🔗 Processing URLs using existing iMessage preview data...\n")
+
+	urlThumbnails := make(map[string]*urlprocessor.URLThumbnail)
+	processedURLs := make(map[string]bool)
+
+	// Process each message that might have URL previews
+	for _, msg := range messages {
+		if msg.Text != nil {
+			urls := g.urlProcessor.FindURLsInText(*msg.Text)
+			if len(urls) > 0 {
+				// Extract existing preview data from this message
+				messagePreviews := g.urlProcessor.ProcessMessageForURLPreviews(int64(msg.ID))
+				for url, thumbnail := range messagePreviews {
+					if !processedURLs[url] {
+						urlThumbnails[url] = thumbnail
+						processedURLs[url] = true
+						if thumbnail.Success {
+							fmt.Printf("✅ Found existing preview for: %s (title: %s)\n", url, thumbnail.Title)
+						} else {
+							fmt.Printf("⚠️  No preview data found for: %s\n", url)
+						}
+					}
+				}
+
+				// For URLs without existing preview data, try the fallback method
+				for _, url := range urls {
+					if !processedURLs[url] {
+						thumbnail := g.urlProcessor.ProcessURL(url)
+						urlThumbnails[url] = thumbnail
+						processedURLs[url] = true
+						if thumbnail.Success {
+							fmt.Printf("✅ Generated fallback thumbnail for: %s\n", url)
+						} else {
+							fmt.Printf("⚠️  Failed to generate thumbnail for: %s\n", url)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	fmt.Printf("🔗 Processed %d unique URLs\n", len(urlThumbnails))
+	return urlThumbnails
+}
+
+// writeURLSetupFile writes LaTeX commands for URL processing to a file
+func (g *Generator) writeURLSetupFile() {
+	content := `% Additional commands for URL processing
+\newunicodechar{😂}{{\emojifont\symbol{"1F602}}}
+\newunicodechar{🤣}{{\emojifont\symbol{"1F923}}}
+\newunicodechar{👍}{{\emojifont\symbol{"1F44D}}}
+\newunicodechar{🤷}{{\emojifont\symbol{"1F937}}}
+\newunicodechar{😀}{{\emojifont\symbol{"1F600}}}
+\newunicodechar{⭐}{{\emojifont\symbol{"2B50}}}
+\newunicodechar{😊}{{\emojifont\symbol{"1F60A}}}
+\newunicodechar{❗}{{\emojifont\symbol{"2757}}}
+\newunicodechar{💪}{{\emojifont\symbol{"1F4AA}}}
+\newunicodechar{🏼}{}
+\newunicodechar{️}{}
+\newunicodechar{‍}{}
+
+\newcommand{\messageimage}[1]{%
+  \begin{center}
+  \includegraphics[width=0.8\textwidth,height=0.4\textheight,keepaspectratio]{#1}
+  \end{center}
+  \vspace{0.3cm}
+}
+`
+
+	err := ioutil.WriteFile("templates/url-setup.tex", []byte(content), 0644)
+	if err != nil {
+		fmt.Printf("⚠️  Warning: Could not write URL setup file: %v\n", err)
+	}
+}
+
 // writeFrontmatter writes the YAML frontmatter using template
-func (g *Generator) writeFrontmatter(builder *strings.Builder) {
+func (g *Generator) writeFrontmatter(builder *strings.Builder, urlThumbnails map[string]*urlprocessor.URLThumbnail) {
+	// Write URL setup file if needed
+	if urlThumbnails != nil && len(urlThumbnails) > 0 {
+		g.writeURLSetupFile()
+	}
+
 	data := struct {
 		Title      string
 		Author     string
@@ -158,8 +253,9 @@ func (g *Generator) writePageStructure(builder *strings.Builder) {
 }
 
 // writeMessages writes all messages in conversation format
-func (g *Generator) writeMessages(builder *strings.Builder, messages []models.Message, handles map[int]models.Handle, reactions map[string][]models.Reaction) {
+func (g *Generator) writeMessages(builder *strings.Builder, messages []models.Message, handles map[int]models.Handle, reactions map[string][]models.Reaction, urlThumbnails map[string]*urlprocessor.URLThumbnail) {
 	var lastDate string
+	var lastMonth string
 	var lastSender string
 	var lastTimestamp string
 
@@ -170,7 +266,14 @@ func (g *Generator) writeMessages(builder *strings.Builder, messages []models.Me
 			continue
 		}
 
-		// Add date header if day changed
+		// Add month chapter header if month changed
+		currentMonth := msg.FormattedDate.Format("January 2006")
+		if currentMonth != lastMonth {
+			builder.WriteString(fmt.Sprintf("\n# %s\n\n", currentMonth))
+			lastMonth = currentMonth
+		}
+
+		// Add date section header if day changed
 		currentDate := msg.FormattedDate.Format("Monday, January 2, 2006")
 		if currentDate != lastDate {
 			builder.WriteString(fmt.Sprintf("\n## %s\n\n", currentDate))
@@ -215,7 +318,7 @@ func (g *Generator) writeMessages(builder *strings.Builder, messages []models.Me
 
 
 		// Write message content in conversation style
-		g.writeMessageBubble(builder, *msg.Text, msg.IsFromMe, timeStr, senderName, showSender, showTimestamp, messageReactions)
+		g.writeMessageBubble(builder, *msg.Text, msg.IsFromMe, timeStr, senderName, showSender, showTimestamp, messageReactions, urlThumbnails)
 
 		// Add attachments if any
 		if msg.HasAttachments && g.config.IncludeImages {
@@ -227,18 +330,24 @@ func (g *Generator) writeMessages(builder *strings.Builder, messages []models.Me
 }
 
 // writeMessageBubble formats a single message as a conversation bubble
-func (g *Generator) writeMessageBubble(builder *strings.Builder, text string, isFromMe bool, timeStr string, senderName string, showSender bool, showTimestamp bool, reactions []models.Reaction) {
+func (g *Generator) writeMessageBubble(builder *strings.Builder, text string, isFromMe bool, timeStr string, senderName string, showSender bool, showTimestamp bool, reactions []models.Reaction, urlThumbnails map[string]*urlprocessor.URLThumbnail) {
 	if isFromMe {
-		g.writeSentMessageBubble(builder, text, timeStr, reactions)
+		g.writeSentMessageBubble(builder, text, timeStr, reactions, urlThumbnails)
 	} else {
-		g.writeReceivedMessageBubble(builder, text, timeStr, senderName, showSender, showTimestamp, reactions)
+		g.writeReceivedMessageBubble(builder, text, timeStr, senderName, showSender, showTimestamp, reactions, urlThumbnails)
 	}
 }
 
 // writeSentMessageBubble formats a message sent by the user (right-aligned, blue)
-func (g *Generator) writeSentMessageBubble(builder *strings.Builder, text string, timeStr string, reactions []models.Reaction) {
+func (g *Generator) writeSentMessageBubble(builder *strings.Builder, text string, timeStr string, reactions []models.Reaction, urlThumbnails map[string]*urlprocessor.URLThumbnail) {
+	// Replace URLs with images if thumbnails available
+	processedText := text
+	if urlThumbnails != nil {
+		processedText = g.urlProcessor.ReplaceURLsWithImages(text, urlThumbnails)
+	}
+
 	// Escape LaTeX special characters
-	escapedText := g.escapeLaTeX(text)
+	escapedText := g.escapeLaTeX(processedText)
 
 	// Replace newlines with line breaks
 	escapedText = strings.ReplaceAll(escapedText, "\n", "  \n")
@@ -260,9 +369,15 @@ func (g *Generator) writeSentMessageBubble(builder *strings.Builder, text string
 }
 
 // writeReceivedMessageBubble formats a message received from others (left-aligned, gray)
-func (g *Generator) writeReceivedMessageBubble(builder *strings.Builder, text string, timeStr string, senderName string, showSender bool, showTimestamp bool, reactions []models.Reaction) {
+func (g *Generator) writeReceivedMessageBubble(builder *strings.Builder, text string, timeStr string, senderName string, showSender bool, showTimestamp bool, reactions []models.Reaction, urlThumbnails map[string]*urlprocessor.URLThumbnail) {
+	// Replace URLs with images if thumbnails available
+	processedText := text
+	if urlThumbnails != nil {
+		processedText = g.urlProcessor.ReplaceURLsWithImages(text, urlThumbnails)
+	}
+
 	// Escape LaTeX special characters
-	escapedText := g.escapeLaTeX(text)
+	escapedText := g.escapeLaTeX(processedText)
 
 	// Replace newlines with line breaks
 	escapedText = strings.ReplaceAll(escapedText, "\n", "  \n")
@@ -289,8 +404,19 @@ func (g *Generator) writeReceivedMessageBubble(builder *strings.Builder, text st
 	builder.WriteString("\n\n")
 }
 
-// escapeLaTeX escapes special LaTeX characters
+// escapeLaTeX escapes special LaTeX characters while preserving image commands
 func (g *Generator) escapeLaTeX(text string) string {
+	// First, protect image commands by temporarily replacing them
+	imageCommands := make(map[string]string)
+	imageRegex := regexp.MustCompile(`\\messageimage\{[^}]+\}`)
+	matches := imageRegex.FindAllString(text, -1)
+
+	for i, match := range matches {
+		placeholder := fmt.Sprintf("IMAGECOMMAND%d", i)
+		imageCommands[placeholder] = match
+		text = strings.ReplaceAll(text, match, placeholder)
+	}
+
 	// Replace LaTeX special characters
 	text = strings.ReplaceAll(text, "\\", "\\textbackslash{}")
 	text = strings.ReplaceAll(text, "{", "\\{")
@@ -302,6 +428,12 @@ func (g *Generator) escapeLaTeX(text string) string {
 	text = strings.ReplaceAll(text, "^", "\\textasciicircum{}")
 	text = strings.ReplaceAll(text, "_", "\\_")
 	text = strings.ReplaceAll(text, "~", "\\textasciitilde{}")
+
+	// Restore protected image commands
+	for placeholder, imageCommand := range imageCommands {
+		text = strings.ReplaceAll(text, placeholder, imageCommand)
+	}
+
 	return text
 }
 

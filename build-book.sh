@@ -24,8 +24,7 @@ echo "🔄 Step 1: Generating markdown from database..."
 ./imessages-book generate \
     --title "${TITLE}" \
     --author "${AUTHOR}" \
-    --output "${OUTPUT_DIR}/book.md" \
-    --include-images=false
+    --output "${OUTPUT_DIR}/book.md"
 
 if [ $? -ne 0 ]; then
     echo "❌ Failed to generate markdown"

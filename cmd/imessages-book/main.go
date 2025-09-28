@@ -42,7 +42,9 @@ func init() {
 	generateCmd.Flags().StringVar(&config.PageWidth, "page-width", "5.5in", "Page width")
 	generateCmd.Flags().StringVar(&config.PageHeight, "page-height", "8.5in", "Page height")
 	generateCmd.Flags().BoolVar(&config.IncludeImages, "include-images", true, "Include images in output")
-	generateCmd.Flags().BoolVar(&config.IncludePreviews, "include-previews", false, "Generate link previews")
+
+	// Always enable URL previews
+	config.IncludePreviews = true
 
 	// Build command flags
 	buildCmd.Flags().StringVar(&config.OutputPath, "input", "book.md", "Input markdown file")
