@@ -8,6 +8,35 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// ReactionType represents the type of message reaction/tapback
+type ReactionType int
+
+const (
+	ReactionNone     ReactionType = 0
+	ReactionLoved    ReactionType = 2000
+	ReactionLiked    ReactionType = 2001
+	ReactionUnknown  ReactionType = 2002
+	ReactionLaughed  ReactionType = 2003
+	ReactionUnknown2 ReactionType = 2004
+	ReactionCustom   ReactionType = 2006 // Custom emoji reactions
+)
+
+// String returns a human-readable representation of the reaction type
+func (rt ReactionType) String() string {
+	switch rt {
+	case ReactionLoved:
+		return "Loved"
+	case ReactionLiked:
+		return "Liked"
+	case ReactionLaughed:
+		return "Laughed"
+	case ReactionCustom:
+		return "Reacted"
+	default:
+		return "Unknown"
+	}
+}
+
 // Message represents an iMessage from the database
 type Message struct {
 	ID                    int       `db:"ROWID"`
@@ -27,11 +56,23 @@ type Message struct {
 	AssociatedMessageType int       `db:"associated_message_type"`
 	ItemType              int       `db:"item_type"`
 
+	// Threading fields
+	ReplyToGUID            *string `db:"reply_to_guid"`
+	ThreadOriginatorGUID   *string `db:"thread_originator_guid"`
+	ThreadOriginatorPart   *string `db:"thread_originator_part"`
+
 	// Computed fields
 	FormattedDate   time.Time
 	SenderName      string
 	Attachments     []Attachment
 	Reactions       []Reaction
+
+	// Threading computed fields
+	ReplyToMessage     *Message  // Populated when loading thread context
+	ThreadReplies      []Message // Messages that reply to this message
+	ThreadOriginator   *Message  // The original message that started this thread
+	IsReaction         bool      // True if this is a reaction (tapback)
+	ReactionType       ReactionType
 }
 
 // Attachment represents a file attachment
@@ -131,4 +172,57 @@ type PDFInfo struct {
 	CreatedAt  time.Time
 	PageWidth  string
 	PageHeight string
+}
+
+// Message helper methods for threading
+
+// IsReply returns true if this message is a reply to another message
+func (m *Message) IsReply() bool {
+	return m.ReplyToGUID != nil && *m.ReplyToGUID != ""
+}
+
+// IsInThread returns true if this message is part of a thread
+func (m *Message) IsInThread() bool {
+	return m.ThreadOriginatorGUID != nil && *m.ThreadOriginatorGUID != ""
+}
+
+// IsThreadOriginator returns true if this message started a thread
+func (m *Message) IsThreadOriginator() bool {
+	return m.IsInThread() && *m.ThreadOriginatorGUID == m.GUID
+}
+
+// GetReactionType returns the reaction type for this message
+func (m *Message) GetReactionType() ReactionType {
+	return ReactionType(m.AssociatedMessageType)
+}
+
+// IsReactionMessage returns true if this message is a reaction/tapback
+func (m *Message) IsReactionMessage() bool {
+	return m.AssociatedMessageGUID != nil && m.AssociatedMessageType != 0
+}
+
+// GetReactionTarget returns the GUID of the message this reaction targets
+func (m *Message) GetReactionTarget() string {
+	if m.AssociatedMessageGUID != nil {
+		return *m.AssociatedMessageGUID
+	}
+	return ""
+}
+
+// HasReplies returns true if this message has direct replies
+func (m *Message) HasReplies() bool {
+	return len(m.ThreadReplies) > 0
+}
+
+// GetThreadDepth returns how deep this message is in a thread (0 = original, 1 = first reply, etc.)
+func (m *Message) GetThreadDepth() int {
+	if !m.IsInThread() {
+		return 0
+	}
+	if m.IsThreadOriginator() {
+		return 0
+	}
+	// For now, assume direct replies are depth 1
+	// Could be enhanced to calculate actual depth by traversing the chain
+	return 1
 }
