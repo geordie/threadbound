@@ -1,5 +1,10 @@
 \begin{tikzpicture}
-\clip[rounded corners=8pt] (0,0) rectangle (2.5in,1.875in);
-\node at (1.25in,0.9375in) {\includegraphics[width=2.5in,keepaspectratio]{ {{.Path}} }};
-\draw[lightgray, rounded corners=8pt, line width=0.5pt] (0,0) rectangle (2.5in,1.875in);
+% Create an invisible node to measure image dimensions
+\node[inner sep=0pt, opacity=0] (img) {\adjustbox{max width=2.5in, max height=3in}{\includegraphics{ {{.Path}} }}};
+% Set clip path BEFORE drawing the visible image
+\clip[rounded corners=8pt] (img.south west) rectangle (img.north east);
+% Now draw the actual image - it will be clipped to rounded corners
+\node[inner sep=0pt] at (img.center) {\adjustbox{max width=2.5in, max height=3in}{\includegraphics{ {{.Path}} }}};
+% Draw border on top
+\draw[lightgray, rounded corners=8pt, line width=0.5pt] (img.south west) rectangle (img.north east);
 \end{tikzpicture}
