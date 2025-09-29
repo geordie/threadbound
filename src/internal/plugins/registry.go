@@ -4,10 +4,17 @@ import (
 	"threadbound/internal/output"
 	"threadbound/internal/plugins/html"
 	"threadbound/internal/plugins/pdf"
+	"threadbound/internal/plugins/tex"
 )
 
 // RegisterBuiltinPlugins registers all built-in output format plugins
 func RegisterBuiltinPlugins() error {
+	// Register TeX plugin
+	texPlugin := tex.NewTeXPlugin()
+	if err := output.Register(texPlugin); err != nil {
+		return err
+	}
+
 	// Register PDF plugin
 	pdfPlugin := pdf.NewPDFPlugin()
 	if err := output.Register(pdfPlugin); err != nil {

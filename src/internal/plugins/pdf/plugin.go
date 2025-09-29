@@ -7,12 +7,12 @@ import (
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
-	"threadbound/internal/markdown"
 	"threadbound/internal/models"
+	"threadbound/internal/texgen"
 	"threadbound/internal/output"
 )
 
-// PDFPlugin implements the OutputPlugin interface for PDF generation via Pandoc
+// PDFPlugin implements the OutputPlugin interface for PDF generation via XeLaTeX
 type PDFPlugin struct {
 	*output.BasePlugin
 }
@@ -41,23 +41,23 @@ func NewPDFPlugin() *PDFPlugin {
 	}
 }
 
-// Generate creates a PDF by first generating markdown then converting with Pandoc
+// Generate creates a PDF by first generating TeX then converting with XeLaTeX
 func (p *PDFPlugin) Generate(ctx *output.GenerationContext) ([]byte, error) {
-	// First generate markdown content
-	markdownContent, err := p.generateMarkdown(ctx)
+	// First generate TeX content
+	texContent, err := p.generateTeX(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate markdown: %w", err)
+		return nil, fmt.Errorf("failed to generate TeX: %w", err)
 	}
 
-	// Write markdown to temporary file
-	tempMarkdownPath := "temp_book.md"
-	if err := writeToFile(tempMarkdownPath, markdownContent); err != nil {
-		return nil, fmt.Errorf("failed to write temporary markdown: %w", err)
+	// Write TeX to temporary file
+	tempTexPath := "temp_book.tex"
+	if err := writeToFile(tempTexPath, texContent); err != nil {
+		return nil, fmt.Errorf("failed to write temporary TeX: %w", err)
 	}
-	defer removeFile(tempMarkdownPath)
+	defer removeFile(tempTexPath)
 
-	// Convert markdown to PDF using Pandoc
-	pdfData, err := p.convertToPDF(tempMarkdownPath, ctx.Config)
+	// Convert TeX to PDF using XeLaTeX
+	pdfData, err := p.convertToPDF(tempTexPath, ctx.Config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to PDF: %w", err)
 	}
@@ -65,9 +65,9 @@ func (p *PDFPlugin) Generate(ctx *output.GenerationContext) ([]byte, error) {
 	return pdfData, nil
 }
 
-// generateMarkdown creates the markdown content using the existing generator
-func (p *PDFPlugin) generateMarkdown(ctx *output.GenerationContext) ([]byte, error) {
-	// Create a temporary database connection for the markdown generator
+// generateTeX creates the TeX content using the existing generator
+func (p *PDFPlugin) generateTeX(ctx *output.GenerationContext) ([]byte, error) {
+	// Create a temporary database connection for the TeX generator
 	// This is a temporary solution until we refactor the URL processor
 	db, err := sql.Open("sqlite3", ctx.Config.DatabasePath)
 	if err != nil {
@@ -75,8 +75,8 @@ func (p *PDFPlugin) generateMarkdown(ctx *output.GenerationContext) ([]byte, err
 	}
 	defer db.Close()
 
-	// Create markdown generator
-	generator := markdown.New(ctx.Config, db)
+	// Create TeX generator
+	generator := texgen.New(ctx.Config, db)
 
 	// Convert reactions to the format expected by the generator
 	reactions := make(map[string][]models.Reaction)
@@ -84,10 +84,10 @@ func (p *PDFPlugin) generateMarkdown(ctx *output.GenerationContext) ([]byte, err
 		reactions[guid] = reactionList
 	}
 
-	// Generate the markdown content
-	markdownContent := generator.GenerateBook(ctx.Messages, ctx.Handles, reactions)
+	// Generate the TeX content
+	texContent := generator.GenerateBook(ctx.Messages, ctx.Handles, reactions)
 
-	return []byte(markdownContent), nil
+	return []byte(texContent), nil
 }
 
 // ValidateConfig validates the PDF plugin configuration
@@ -129,43 +129,25 @@ func (p *PDFPlugin) GetRequiredTemplates() []string {
 	}
 }
 
-// convertToPDF converts the markdown file to PDF using Pandoc
-func (p *PDFPlugin) convertToPDF(markdownPath string, config *models.BookConfig) ([]byte, error) {
-	// Check if Pandoc is available
-	if err := checkPandoc(); err != nil {
+// convertToPDF converts the TeX file to PDF using XeLaTeX
+func (p *PDFPlugin) convertToPDF(texPath string, config *models.BookConfig) ([]byte, error) {
+	// Check if XeLaTeX is available
+	if err := checkXeLaTeX(); err != nil {
 		return nil, err
-	}
-
-	// Prepare template path
-	templatePath := filepath.Join(config.TemplateDir, "book.tex")
-	if !fileExists(templatePath) {
-		return nil, fmt.Errorf("template not found: %s", templatePath)
 	}
 
 	// Generate temporary PDF file
-	tempPDFPath := strings.TrimSuffix(markdownPath, ".md") + ".pdf"
+	tempPDFPath := strings.TrimSuffix(texPath, ".tex") + ".pdf"
 	defer removeFile(tempPDFPath)
 
-	// Build Pandoc command
-	args := []string{
-		markdownPath,
-		"--from", "markdown",
-		"--to", "pdf",
-		"--template", templatePath,
-		"--pdf-engine", "xelatex",
-		"--variable", fmt.Sprintf("geometry:paperwidth=%s", config.PageWidth),
-		"--variable", fmt.Sprintf("geometry:paperheight=%s", config.PageHeight),
-		"--variable", "geometry:margin=0.5in",
-		"--table-of-contents",
-		"--number-sections",
-		"--standalone",
-		"--output", tempPDFPath,
-		"--verbose",
-	}
+	// Get the directory for temporary files
+	outputDir := filepath.Dir(texPath)
 
-	// Execute Pandoc
-	if err := runPandoc(args); err != nil {
-		return nil, err
+	// Run XeLaTeX multiple times for TOC and cross-references
+	for i := 1; i <= 3; i++ {
+		if err := runXeLaTeX(texPath, outputDir); err != nil {
+			return nil, fmt.Errorf("xelatex pass %d failed: %w", i, err)
+		}
 	}
 
 	// Read the generated PDF file

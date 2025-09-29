@@ -16,21 +16,21 @@ var rootCmd = &cobra.Command{
 	Use:   "threadbound",
 	Short: "Convert iMessages database to a book",
 	Long: `A tool to extract iMessages from a SQLite database and convert them
-into a formatted book using Pandoc.`,
+into a formatted book using XeLaTeX.`,
 }
 
 var generateCmd = &cobra.Command{
 	Use:   "generate",
-	Short: "Generate markdown from iMessages database",
-	Long:  `Extract messages from the SQLite database and generate a markdown file`,
+	Short: "Generate TeX from iMessages database",
+	Long:  `Extract messages from the SQLite database and generate a TeX file`,
 	PreRunE: loadConfig,
 	RunE:  runGenerate,
 }
 
 var buildCmd = &cobra.Command{
 	Use:   "build-pdf",
-	Short: "Build PDF from markdown using Pandoc",
-	Long:  `Convert the generated markdown to PDF using Pandoc with custom templates`,
+	Short: "Build PDF from TeX using XeLaTeX",
+	Long:  `Convert the generated TeX to PDF using XeLaTeX`,
 	PreRunE: loadConfig,
 	RunE:  runBuildPDF,
 }
@@ -46,7 +46,7 @@ func init() {
 	// Generate command flags
 	generateCmd.Flags().StringVar(&config.DatabasePath, "db", "chat.db", "Path to iMessages database")
 	generateCmd.Flags().StringVar(&config.AttachmentsPath, "attachments", "Attachments", "Path to attachments directory")
-	generateCmd.Flags().StringVar(&config.OutputPath, "output", "book.md", "Output markdown file")
+	generateCmd.Flags().StringVar(&config.OutputPath, "output", "book.tex", "Output TeX file")
 	generateCmd.Flags().StringVar(&config.Title, "title", "Our Messages", "Book title")
 	generateCmd.Flags().StringVar(&config.Author, "author", "", "Book author")
 	generateCmd.Flags().StringVar(&config.PageWidth, "page-width", "5.5in", "Page width")
@@ -57,7 +57,7 @@ func init() {
 	config.IncludePreviews = true
 
 	// Build command flags
-	buildCmd.Flags().StringVar(&config.OutputPath, "input", "book.md", "Input markdown file")
+	buildCmd.Flags().StringVar(&config.OutputPath, "input", "book.tex", "Input TeX file")
 	buildCmd.Flags().StringVar(&config.TemplateDir, "template-dir", "templates", "Template directory")
 	buildCmd.Flags().StringVar(&config.PageWidth, "page-width", "5.5in", "Page width")
 	buildCmd.Flags().StringVar(&config.PageHeight, "page-height", "8.5in", "Page height")
@@ -158,9 +158,9 @@ func runBuildPDF(cmd *cobra.Command, args []string) error {
 
 	// Generate output filename
 	outputPDF := "book.pdf"
-	if config.OutputPath != "book.md" {
-		// Replace .md extension with .pdf
-		outputPDF = config.OutputPath[:len(config.OutputPath)-3] + ".pdf"
+	if config.OutputPath != "book.tex" && len(config.OutputPath) > 4 && config.OutputPath[len(config.OutputPath)-4:] == ".tex" {
+		// Replace .tex extension with .pdf
+		outputPDF = config.OutputPath[:len(config.OutputPath)-4] + ".pdf"
 	}
 
 	// Build the PDF

@@ -37,7 +37,7 @@ func (b *Builder) Close() error {
 
 // Generate creates the book using the specified output format
 func (b *Builder) Generate() error {
-	return b.GenerateWithFormat("pdf") // Default to PDF for backward compatibility
+	return b.GenerateWithFormat("tex") // Default to TeX for backward compatibility
 }
 
 // GenerateWithFormat creates the book using the specified output plugin

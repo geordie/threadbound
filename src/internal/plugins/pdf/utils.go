@@ -28,12 +28,12 @@ func removeFile(path string) {
 	os.Remove(path) // Ignore errors for cleanup
 }
 
-// checkPandoc verifies that Pandoc is installed and available
-func checkPandoc() error {
-	cmd := exec.Command("pandoc", "--version")
+// checkXeLaTeX verifies that XeLaTeX is installed and available
+func checkXeLaTeX() error {
+	cmd := exec.Command("xelatex", "--version")
 	output, err := cmd.Output()
 	if err != nil {
-		return fmt.Errorf("pandoc not found - please install Pandoc to generate PDFs")
+		return fmt.Errorf("xelatex not found - please install XeLaTeX (part of TeX Live or MiKTeX) to generate PDFs")
 	}
 
 	// Parse version for informational purposes
@@ -45,51 +45,37 @@ func checkPandoc() error {
 	return nil
 }
 
-// runPandoc executes pandoc with the given arguments
-func runPandoc(args []string) error {
-	fmt.Printf("🔨 Building PDF with Pandoc...\n")
+// runXeLaTeX executes a single XeLaTeX compilation pass
+func runXeLaTeX(inputFile, outputDir string) error {
+	args := []string{
+		"-interaction=nonstopmode",
+		"-output-directory=" + outputDir,
+		inputFile,
+	}
 
-	// Execute Pandoc
-	cmd := exec.Command("pandoc", args...)
+	cmd := exec.Command("xelatex", args...)
 	cmd.Dir = "."
 
 	// Capture output
 	output, err := cmd.CombinedOutput()
 
-	// Determine output file from args
-	var outputFile string
-	for i, arg := range args {
-		if arg == "--output" && i+1 < len(args) {
-			outputFile = args[i+1]
-			break
-		}
-	}
-
-	// Check if PDF was created despite errors (LaTeX often succeeds with warnings)
+	// XeLaTeX may return an error even on success (warnings treated as errors)
+	// Check if PDF was actually created
+	baseFilename := strings.TrimSuffix(inputFile, ".tex")
+	pdfPath := baseFilename + ".pdf"
 	pdfExists := false
-	if outputFile != "" {
-		if _, statErr := os.Stat(outputFile); statErr == nil {
-			pdfExists = true
-		}
+	if _, statErr := os.Stat(pdfPath); statErr == nil {
+		pdfExists = true
 	}
 
 	if err != nil && !pdfExists {
-		fmt.Printf("❌ Pandoc failed with error: %v\n", err)
+		fmt.Printf("❌ XeLaTeX failed with error: %v\n", err)
 		fmt.Printf("Output:\n%s\n", string(output))
-		return fmt.Errorf("pandoc failed: %w\nOutput: %s", err, string(output))
+		return fmt.Errorf("xelatex failed: %w", err)
 	}
 
 	if err != nil && pdfExists {
-		fmt.Printf("⚠️  Pandoc completed with warnings (likely font/emoji issues)\n")
-		fmt.Printf("📄 PDF was still generated successfully\n")
-	}
-
-	// Check if output file was created
-	if outputFile != "" {
-		if _, err := os.Stat(outputFile); err != nil {
-			return fmt.Errorf("PDF was not created: %s", outputFile)
-		}
-		fmt.Printf("✅ PDF generated successfully: %s\n", outputFile)
+		fmt.Printf("⚠️  XeLaTeX completed with warnings (likely font/emoji issues)\n")
 	}
 
 	return nil

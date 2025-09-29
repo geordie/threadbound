@@ -128,73 +128,23 @@
 \setcounter{tocdepth}{1}
 \renewcommand{\contentsname}{Table of Contents}
 
-% Custom title page
-\renewcommand{\maketitle}{%
-    \begin{titlepage}
-        \centering
-        \vspace*{2cm}
-
-        {\Huge\bfseries $title$}
-
-        \vspace{1cm}
-
-        $if(author)$
-        {\Large $author$}
-
-        \vspace{1cm}
-        $endif$
-
-        {\large $date$}
-
-        \vfill
-
-        {\small Generated with iMessages Book Tool}
-    \end{titlepage}
-}
-
-% Copyright page
-\newcommand{\copyrightpage}{%
-    \newpage
-    \thispagestyle{empty}
-    \vspace*{\fill}
-    \begin{flushleft}
-    © $date-meta.year$ $if(author)$$author$$endif$\\[0.5cm]
-
-    This book contains personal messages and conversations.
-    All rights reserved. No part of this publication may be reproduced,
-    distributed, or transmitted in any form or by any means without
-    the prior written permission of the copyright holder.\\[0.5cm]
-
-    Generated using iMessages Book Tool.
-    \end{flushleft}
-    \newpage
-}
-
-% Document metadata
-$if(title)$
-\title{$title$}
-$endif$
-$if(author)$
-\author{$author$}
-$endif$
-$if(date)$
-\date{$date$}
-$endif$
+% Variable definitions will be injected here
+%%VARIABLES%%
 
 % Begin document
 \begin{document}
 
 % Title page
-\maketitle
+%%TITLE_PAGE%%
 
 % Copyright page
-\copyrightpage
+%%COPYRIGHT_PAGE%%
 
 % Table of contents
 \tableofcontents
 \newpage
 
 % Main content
-$body$
+%%CONTENT%%
 
 \end{document}
