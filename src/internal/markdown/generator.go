@@ -11,8 +11,8 @@ import (
 	"text/template"
 	"time"
 
-	"imessages-book/internal/models"
-	"imessages-book/internal/urlprocessor"
+	"threadbound/internal/models"
+	"threadbound/internal/urlprocessor"
 )
 
 // Generator handles markdown generation

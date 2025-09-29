@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"imessages-book/internal/models"
+	"threadbound/internal/models"
 )
 
 // getMockData returns a small set of mock messages, handles, and reactions for testing

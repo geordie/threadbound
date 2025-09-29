@@ -21,7 +21,7 @@ mkdir -p "${OUTPUT_DIR}"
 
 # Step 1: Generate Markdown
 echo "🔄 Step 1: Generating markdown from database..."
-./src/imessages-book generate \
+./src/threadbound generate \
     --title "${TITLE}" \
     --author "${AUTHOR}" \
     --output "${OUTPUT_DIR}/book.md"
@@ -35,7 +35,7 @@ echo "✅ Markdown generated: ${OUTPUT_DIR}/book.md"
 
 # Step 2: Generate PDF
 echo "🔄 Step 2: Generating PDF..."
-./src/imessages-book build-pdf \
+./src/threadbound build-pdf \
     --input "${OUTPUT_DIR}/book.md" \
     --template-dir templates
 

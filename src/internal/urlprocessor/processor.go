@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"imessages-book/internal/models"
+	"threadbound/internal/models"
 )
 
 // URLProcessor handles URL detection and preview extraction from iMessage database

@@ -7,7 +7,7 @@ import (
 	"text/template"
 	"time"
 
-	"imessages-book/internal/models"
+	"threadbound/internal/models"
 )
 
 // TestImageAttachmentTemplate tests the image template with rounded corners and aspect ratio preservation

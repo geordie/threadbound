@@ -1,4 +1,4 @@
-module imessages-book
+module threadbound
 
 go 1.22
 

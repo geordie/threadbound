@@ -6,7 +6,7 @@ import (
 	"text/template"
 	"time"
 
-	"imessages-book/internal/models"
+	"threadbound/internal/models"
 )
 
 // Test just the template execution without loading from files

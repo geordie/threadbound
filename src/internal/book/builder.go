@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"imessages-book/internal/attachments"
-	"imessages-book/internal/database"
-	"imessages-book/internal/markdown"
-	"imessages-book/internal/models"
+	"threadbound/internal/attachments"
+	"threadbound/internal/database"
+	"threadbound/internal/markdown"
+	"threadbound/internal/models"
 )
 
 // Builder orchestrates the book generation process

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"imessages-book/internal/models"
+	"threadbound/internal/models"
 )
 
 // PDFBuilder handles PDF generation using Pandoc

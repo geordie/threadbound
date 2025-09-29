@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"imessages-book/internal/models"
+	"threadbound/internal/models"
 	_ "modernc.org/sqlite"
 )
 
