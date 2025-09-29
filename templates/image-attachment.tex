@@ -1,1 +1,5 @@
-![]({{.Path}}){width=2.5in}
+\begin{tikzpicture}
+\clip[rounded corners=8pt] (0,0) rectangle (2.5in,1.875in);
+\node at (1.25in,0.9375in) {\includegraphics[width=2.5in,keepaspectratio]{ {{.Path}} }};
+\draw[lightgray, rounded corners=8pt, line width=0.5pt] (0,0) rectangle (2.5in,1.875in);
+\end{tikzpicture}

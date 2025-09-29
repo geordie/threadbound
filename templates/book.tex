@@ -26,6 +26,19 @@
 \usepackage{hyperref}
 \usepackage{parskip}
 
+% Float and figure packages
+\usepackage{float}
+\floatplacement{figure}{H}
+\usepackage{caption}
+\captionsetup[figure]{
+    name=,
+    labelsep=none,
+    labelformat=empty}
+
+% Basic image handling - no rounded corners for now
+\usepackage{adjustbox}
+\usepackage{tikz}
+
 % Font configuration - use fonts with better Unicode support
 \setmainfont{Arial}
 \setmonofont{Courier New}
