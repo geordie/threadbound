@@ -8,7 +8,7 @@ set -e
 TITLE="${1:-Our Group Chat}"
 AUTHOR="${2:-}"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-OUTPUT_DIR="output_${TIMESTAMP}"
+OUTPUT_DIR="output_${3:-$TIMESTAMP}"
 
 echo "📚 iMessages Book Generation Pipeline"
 echo "Title: ${TITLE}"
@@ -21,7 +21,7 @@ mkdir -p "${OUTPUT_DIR}"
 
 # Step 1: Generate Markdown
 echo "🔄 Step 1: Generating markdown from database..."
-./imessages-book generate \
+./src/imessages-book generate \
     --title "${TITLE}" \
     --author "${AUTHOR}" \
     --output "${OUTPUT_DIR}/book.md"
@@ -35,7 +35,7 @@ echo "✅ Markdown generated: ${OUTPUT_DIR}/book.md"
 
 # Step 2: Generate PDF
 echo "🔄 Step 2: Generating PDF..."
-./imessages-book build-pdf \
+./src/imessages-book build-pdf \
     --input "${OUTPUT_DIR}/book.md" \
     --template-dir templates
 
