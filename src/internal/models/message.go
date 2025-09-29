@@ -1,6 +1,12 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"os"
+	"time"
+
+	"gopkg.in/yaml.v3"
+)
 
 // Message represents an iMessage from the database
 type Message struct {
@@ -65,16 +71,47 @@ type Handle struct {
 
 // BookConfig holds configuration for book generation
 type BookConfig struct {
-	Title           string
-	Author          string
-	DatabasePath    string
-	AttachmentsPath string
-	OutputPath      string
-	TemplateDir     string
-	IncludeImages   bool
-	IncludePreviews bool
-	PageWidth       string
-	PageHeight      string
+	Title           string `yaml:"title"`
+	Author          string `yaml:"author"`
+	DatabasePath    string `yaml:"database_path"`
+	AttachmentsPath string `yaml:"attachments_path"`
+	OutputPath      string `yaml:"output_path"`
+	TemplateDir     string `yaml:"template_dir"`
+	IncludeImages   bool   `yaml:"include_images"`
+	IncludePreviews bool   `yaml:"include_previews"`
+	PageWidth       string `yaml:"page_width"`
+	PageHeight      string `yaml:"page_height"`
+}
+
+// LoadConfigFromFile loads configuration from a YAML file
+func LoadConfigFromFile(configPath string) (*BookConfig, error) {
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file %s: %w", configPath, err)
+	}
+
+	var config BookConfig
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("failed to parse config file %s: %w", configPath, err)
+	}
+
+	return &config, nil
+}
+
+// GetDefaultConfig returns a BookConfig with default values
+func GetDefaultConfig() *BookConfig {
+	return &BookConfig{
+		Title:           "Our Messages",
+		Author:          "",
+		DatabasePath:    "chat.db",
+		AttachmentsPath: "Attachments",
+		OutputPath:      "book.md",
+		TemplateDir:     "templates",
+		IncludeImages:   true,
+		IncludePreviews: true,
+		PageWidth:       "5.5in",
+		PageHeight:      "8.5in",
+	}
 }
 
 // BookStats holds statistics about the book content

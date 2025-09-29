@@ -1,19 +1,23 @@
 #!/bin/bash
 
 # Complete iMessages Book Generation Pipeline
-# Usage: ./build-book.sh [title] [author]
+# Usage: ./build-book.sh [title] [author] [output_dir] [config_file]
 
 set -e
 
 TITLE="${1:-Our Group Chat}"
 AUTHOR="${2:-}"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-OUTPUT_DIR="output_${3:-$TIMESTAMP}"
+OUTPUT_DIR="${3:-output_$TIMESTAMP}"
+CONFIG_FILE="${4:-}"
 
 echo "📚 iMessages Book Generation Pipeline"
 echo "Title: ${TITLE}"
 echo "Author: ${AUTHOR}"
 echo "Output Directory: ${OUTPUT_DIR}"
+if [ -n "${CONFIG_FILE}" ]; then
+    echo "Config File: ${CONFIG_FILE}"
+fi
 echo
 
 # Create output directory
@@ -21,10 +25,18 @@ mkdir -p "${OUTPUT_DIR}"
 
 # Step 1: Generate Markdown
 echo "🔄 Step 1: Generating markdown from database..."
-./src/threadbound generate \
-    --title "${TITLE}" \
-    --author "${AUTHOR}" \
-    --output "${OUTPUT_DIR}/book.md"
+if [ -n "${CONFIG_FILE}" ]; then
+    ./src/threadbound generate \
+        --config "${CONFIG_FILE}" \
+        --title "${TITLE}" \
+        --author "${AUTHOR}" \
+        --output "${OUTPUT_DIR}/book.md"
+else
+    ./src/threadbound generate \
+        --title "${TITLE}" \
+        --author "${AUTHOR}" \
+        --output "${OUTPUT_DIR}/book.md"
+fi
 
 if [ $? -ne 0 ]; then
     echo "❌ Failed to generate markdown"
@@ -35,9 +47,15 @@ echo "✅ Markdown generated: ${OUTPUT_DIR}/book.md"
 
 # Step 2: Generate PDF
 echo "🔄 Step 2: Generating PDF..."
-./src/threadbound build-pdf \
-    --input "${OUTPUT_DIR}/book.md" \
-    --template-dir templates
+if [ -n "${CONFIG_FILE}" ]; then
+    ./src/threadbound build-pdf \
+        --config "${CONFIG_FILE}" \
+        --input "${OUTPUT_DIR}/book.md"
+else
+    ./src/threadbound build-pdf \
+        --input "${OUTPUT_DIR}/book.md" \
+        --template-dir templates
+fi
 
 if [ $? -ne 0 ]; then
     echo "⚠️  PDF generation had issues, but may have succeeded"

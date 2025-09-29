@@ -1,0 +1,20 @@
+# ThreadBound Configuration File
+# All settings can be overridden by command-line flags
+
+# Book metadata
+title: "Our Group Chat"
+author: "The Squad"
+
+# Input/Output paths
+database_path: "chat.db"
+attachments_path: "Attachments"
+output_path: "book.md"
+template_dir: "templates"
+
+# Content settings
+include_images: true
+include_previews: true
+
+# Page formatting
+page_width: "5.5in"
+page_height: "8.5in"

@@ -10,6 +10,7 @@ import (
 )
 
 var config models.BookConfig
+var configFile string
 
 var rootCmd = &cobra.Command{
 	Use:   "threadbound",
@@ -22,6 +23,7 @@ var generateCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generate markdown from iMessages database",
 	Long:  `Extract messages from the SQLite database and generate a markdown file`,
+	PreRunE: loadConfig,
 	RunE:  runGenerate,
 }
 
@@ -29,10 +31,18 @@ var buildCmd = &cobra.Command{
 	Use:   "build-pdf",
 	Short: "Build PDF from markdown using Pandoc",
 	Long:  `Convert the generated markdown to PDF using Pandoc with custom templates`,
+	PreRunE: loadConfig,
 	RunE:  runBuildPDF,
 }
 
 func init() {
+	// Global flags
+	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Path to config file (YAML format)")
+
+	// Initialize config with defaults
+	defaultConfig := models.GetDefaultConfig()
+	config = *defaultConfig
+
 	// Generate command flags
 	generateCmd.Flags().StringVar(&config.DatabasePath, "db", "chat.db", "Path to iMessages database")
 	generateCmd.Flags().StringVar(&config.AttachmentsPath, "attachments", "Attachments", "Path to attachments directory")
@@ -54,6 +64,50 @@ func init() {
 
 	rootCmd.AddCommand(generateCmd)
 	rootCmd.AddCommand(buildCmd)
+}
+
+// loadConfig loads configuration from file if specified, otherwise uses defaults and flags
+func loadConfig(cmd *cobra.Command, args []string) error {
+	if configFile != "" {
+		fileConfig, err := models.LoadConfigFromFile(configFile)
+		if err != nil {
+			return err
+		}
+
+		// Merge file config with command-line flags
+		// Command-line flags take precedence over config file
+		if !cmd.Flags().Changed("title") && fileConfig.Title != "" {
+			config.Title = fileConfig.Title
+		}
+		if !cmd.Flags().Changed("author") && fileConfig.Author != "" {
+			config.Author = fileConfig.Author
+		}
+		if !cmd.Flags().Changed("db") && fileConfig.DatabasePath != "" {
+			config.DatabasePath = fileConfig.DatabasePath
+		}
+		if !cmd.Flags().Changed("attachments") && fileConfig.AttachmentsPath != "" {
+			config.AttachmentsPath = fileConfig.AttachmentsPath
+		}
+		if !cmd.Flags().Changed("output") && fileConfig.OutputPath != "" {
+			config.OutputPath = fileConfig.OutputPath
+		}
+		if !cmd.Flags().Changed("template-dir") && fileConfig.TemplateDir != "" {
+			config.TemplateDir = fileConfig.TemplateDir
+		}
+		if !cmd.Flags().Changed("include-images") {
+			config.IncludeImages = fileConfig.IncludeImages
+		}
+		if !cmd.Flags().Changed("page-width") && fileConfig.PageWidth != "" {
+			config.PageWidth = fileConfig.PageWidth
+		}
+		if !cmd.Flags().Changed("page-height") && fileConfig.PageHeight != "" {
+			config.PageHeight = fileConfig.PageHeight
+		}
+
+		// IncludePreviews is always enabled for now
+		config.IncludePreviews = true
+	}
+	return nil
 }
 
 func runGenerate(cmd *cobra.Command, args []string) error {

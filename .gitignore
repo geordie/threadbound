@@ -1,5 +1,6 @@
 # Compiled binaries (in root directory only)
 /imessages-book
+/src/threadbound
 *.exe
 *.dll
 *.so
@@ -15,6 +16,10 @@
 *.sqlite
 *.sqlite3
 chat.db*
+
+# Config files (may contain sensitive info)
+threadbound.yaml
+src/threadbound.yaml
 
 # Generated content and output
 *.md

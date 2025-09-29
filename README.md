@@ -1,4 +1,4 @@
-# iMessages Book Generator
+# ThreadBound - iMessages Book Generator
 
 A Go-based toolchain to convert iMessages database exports into a formatted book using Pandoc.
 
@@ -38,24 +38,64 @@ sudo apt-get install pandoc
 sudo apt-get install texlive-xetex texlive-fonts-recommended
 ```
 
-## Quick Start
+## Getting Started
 
-1. **Build the tool:**
-   ```bash
-   go build -o imessages-book cmd/imessages-book/main.go
-   ```
+### 1. Build the tool
+```bash
+cd src
+go build -o threadbound ./cmd/threadbound
+```
 
-2. **Generate a book:**
-   ```bash
-   ./build-book.sh "My Group Chat" "Your Name"
-   ```
+### 2. Set up configuration (optional)
+Copy the sample config file and customize it:
+```bash
+cp src/threadbound.yaml.sample src/threadbound.yaml
+# Edit threadbound.yaml with your preferences
+```
+
+The config file allows you to set default values for all options:
+```yaml
+# ThreadBound Configuration File
+title: "Our Group Chat"
+author: "The Squad"
+database_path: "chat.db"
+attachments_path: "Attachments"
+output_path: "book.md"
+template_dir: "templates"
+include_images: true
+include_previews: true
+page_width: "5.5in"
+page_height: "8.5in"
+```
+
+### 3. Generate a book
+
+**Using the build script (recommended):**
+```bash
+# Without config file
+./build-book.sh "My Group Chat" "Your Name"
+
+# With config file (title and author can still be overridden)
+./build-book.sh "My Group Chat" "Your Name" "output_dir" "src/threadbound.yaml"
+```
+
+**Using commands directly:**
+```bash
+# With config file
+./src/threadbound generate --config src/threadbound.yaml
+./src/threadbound build-pdf --config src/threadbound.yaml
+
+# Without config file (using CLI flags)
+./src/threadbound generate --title "My Chat" --author "Me"
+./src/threadbound build-pdf --input book.md
+```
 
 ## Manual Usage
 
 ### Step 1: Generate Markdown
 
 ```bash
-./imessages-book generate \
+./src/threadbound generate \
     --db chat.db \
     --title "Our Group Chat" \
     --author "Your Name" \
@@ -66,24 +106,50 @@ sudo apt-get install texlive-xetex texlive-fonts-recommended
 ### Step 2: Build PDF
 
 ```bash
-./imessages-book build-pdf \
+./src/threadbound build-pdf \
     --input book.md \
     --template-dir templates \
     --page-width 5.5in \
     --page-height 8.5in
 ```
 
+### Available CLI Options
+
+Run `./src/threadbound [command] --help` to see all available options for each command.
+
+**Global flags:**
+- `--config`: Path to YAML config file
+
+**Generate command flags:**
+- `--db`: Path to iMessages database (default: "chat.db")
+- `--attachments`: Path to attachments directory (default: "Attachments")
+- `--output`: Output markdown file (default: "book.md")
+- `--title`: Book title (default: "Our Messages")
+- `--author`: Book author
+- `--include-images`: Include images in output (default: true)
+- `--page-width`: Page width (default: "5.5in")
+- `--page-height`: Page height (default: "8.5in")
+
+**Build-PDF command flags:**
+- `--input`: Input markdown file (default: "book.md")
+- `--template-dir`: Template directory (default: "templates")
+- `--page-width`: Page width (default: "5.5in")
+- `--page-height`: Page height (default: "8.5in")
+
 ## Project Structure
 
 ```
-imessages-book/
-├── cmd/imessages-book/main.go      # CLI entry point
-├── internal/
-│   ├── database/sqlite.go          # Database operations
-│   ├── models/message.go           # Data structures
-│   ├── markdown/generator.go       # Markdown generation
-│   ├── attachments/processor.go    # File processing
-│   └── book/                       # Book building logic
+threadbound/
+├── src/
+│   ├── cmd/threadbound/main.go     # CLI entry point
+│   ├── internal/
+│   │   ├── database/sqlite.go      # Database operations
+│   │   ├── models/message.go       # Data structures
+│   │   ├── markdown/generator.go   # Markdown generation
+│   │   ├── attachments/processor.go # File processing
+│   │   └── book/                   # Book building logic
+│   ├── threadbound                 # Compiled binary
+│   └── threadbound.yaml.sample     # Sample config file
 ├── templates/
 │   └── book.tex                    # LaTeX template
 ├── build-book.sh                   # Complete pipeline script
