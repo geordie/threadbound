@@ -7,8 +7,11 @@ set -e
 
 TITLE="${1:-Our Group Chat}"
 AUTHOR="${2:-}"
+YEAR=$(date +"%Y")
+MONTH=$(date +"%m")
+DAY=$(date +"%d")
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-OUTPUT_DIR="${3:-output_$TIMESTAMP}"
+OUTPUT_DIR="${3:-output/$YEAR/$MONTH/$DAY/$TIMESTAMP}"
 CONFIG_FILE="${4:-}"
 
 echo "📚 iMessages Book Generation Pipeline"
