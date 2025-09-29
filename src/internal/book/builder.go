@@ -6,8 +6,9 @@ import (
 
 	"threadbound/internal/attachments"
 	"threadbound/internal/database"
-	"threadbound/internal/markdown"
 	"threadbound/internal/models"
+	"threadbound/internal/output"
+	_ "threadbound/internal/plugins" // Import to register plugins
 )
 
 // Builder orchestrates the book generation process
@@ -34,8 +35,13 @@ func (b *Builder) Close() error {
 	return b.db.Close()
 }
 
-// Generate creates the markdown book
+// Generate creates the book using the specified output format
 func (b *Builder) Generate() error {
+	return b.GenerateWithFormat("pdf") // Default to PDF for backward compatibility
+}
+
+// GenerateWithFormat creates the book using the specified output plugin
+func (b *Builder) GenerateWithFormat(format string) error {
 	fmt.Println("📱 Extracting messages from database...")
 
 	// Get all messages
@@ -74,18 +80,30 @@ func (b *Builder) Generate() error {
 		return fmt.Errorf("failed to process attachments: %w", err)
 	}
 
-	// Generate markdown
-	fmt.Println("📝 Generating markdown...")
-	generator := markdown.New(b.config, b.db.GetConnection())
-	markdownContent := generator.GenerateBook(messages, handles, reactions)
-
-	// Write to file
-	err = os.WriteFile(b.config.OutputPath, []byte(markdownContent), 0644)
+	// Get book statistics
+	stats, err := b.GetStats()
 	if err != nil {
-		return fmt.Errorf("failed to write markdown file: %w", err)
+		return fmt.Errorf("failed to get stats: %w", err)
 	}
 
-	fmt.Printf("✅ Generated book: %s\n", b.config.OutputPath)
+	// Create generation context
+	ctx := output.CreateContext(messages, handles, reactions, b.config, stats)
+
+	// Generate using plugin system
+	fmt.Printf("📝 Generating %s output...\n", format)
+	generator := output.New()
+	data, filename, err := generator.Generate(format, ctx)
+	if err != nil {
+		return fmt.Errorf("failed to generate %s: %w", format, err)
+	}
+
+	// Write to file
+	err = os.WriteFile(filename, data, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write output file: %w", err)
+	}
+
+	fmt.Printf("✅ Generated book: %s\n", filename)
 	return nil
 }
 

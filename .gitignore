@@ -1,6 +1,5 @@
 # Compiled binaries (in root directory only)
-/imessages-book
-/src/threadbound
+/threadbound
 *.exe
 *.dll
 *.so
@@ -18,8 +17,8 @@
 chat.db*
 
 # Config files (may contain sensitive info)
+config.yaml
 threadbound.yaml
-src/threadbound.yaml
 
 # Generated content and output
 *.md
@@ -73,8 +72,8 @@ Icon?
 /build/
 /dist/
 
-# Go module cache
-go.sum
+# Test files (keep the test files in repo)
+test_output.*
 
 # Claude Code artifacts
 .claude/
