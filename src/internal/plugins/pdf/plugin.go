@@ -1,14 +1,11 @@
 package pdf
 
 import (
-	"database/sql"
 	"fmt"
 	"path/filepath"
 	"strings"
 
-	_ "github.com/mattn/go-sqlite3"
 	"threadbound/internal/models"
-	"threadbound/internal/texgen"
 	"threadbound/internal/output"
 )
 
@@ -65,29 +62,22 @@ func (p *PDFPlugin) Generate(ctx *output.GenerationContext) ([]byte, error) {
 	return pdfData, nil
 }
 
-// generateTeX creates the TeX content using the existing generator
+// generateTeX creates the TeX content using the TeX plugin
 func (p *PDFPlugin) generateTeX(ctx *output.GenerationContext) ([]byte, error) {
-	// Create a temporary database connection for the TeX generator
-	// This is a temporary solution until we refactor the URL processor
-	db, err := sql.Open("sqlite3", ctx.Config.DatabasePath)
+	// Get the TeX plugin from the registry
+	registry := output.GetGlobalRegistry()
+	texPlugin, err := registry.Get("tex")
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
-	// Create TeX generator
-	generator := texgen.New(ctx.Config, db)
-
-	// Convert reactions to the format expected by the generator
-	reactions := make(map[string][]models.Reaction)
-	for guid, reactionList := range ctx.Reactions {
-		reactions[guid] = reactionList
+		return nil, fmt.Errorf("failed to get TeX plugin: %w", err)
 	}
 
-	// Generate the TeX content
-	texContent := generator.GenerateBook(ctx.Messages, ctx.Handles, reactions)
+	// Generate the TeX content using the TeX plugin
+	texContent, err := texPlugin.Generate(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate TeX: %w", err)
+	}
 
-	return []byte(texContent), nil
+	return texContent, nil
 }
 
 // ValidateConfig validates the PDF plugin configuration

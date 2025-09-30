@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"threadbound/internal/models"
+	"threadbound/internal/output"
 )
 
 // URLProcessor handles URL detection and preview extraction from iMessage database
@@ -23,14 +24,8 @@ type URLProcessor struct {
 	db        *sql.DB
 }
 
-// URLThumbnail represents a processed URL thumbnail
-type URLThumbnail struct {
-	URL           string
-	ThumbnailPath string
-	Title         string
-	Description   string
-	Success       bool
-}
+// URLThumbnail is an alias to output.URLThumbnail for backward compatibility
+type URLThumbnail = output.URLThumbnail
 
 // New creates a new URL processor
 func New(config *models.BookConfig, db *sql.DB) *URLProcessor {

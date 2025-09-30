@@ -140,3 +140,8 @@ func FormatList() string {
 func GetDefaultPlugin() (OutputPlugin, error) {
 	return globalRegistry.GetDefaultPlugin()
 }
+
+// GetGlobalRegistry returns the global registry instance
+func GetGlobalRegistry() *Registry {
+	return globalRegistry
+}

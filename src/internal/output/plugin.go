@@ -51,14 +51,15 @@ type GenerationContext struct {
 	Stats         *models.BookStats
 }
 
-// URLThumbnail represents a processed URL preview (will be moved from urlprocessor)
+// URLThumbnail represents a processed URL preview
 type URLThumbnail struct {
-	URL         string
-	Title       string
-	Description string
-	ImagePath   string
-	Success     bool
-	Error       string
+	URL           string
+	Title         string
+	Description   string
+	ThumbnailPath string // Path to thumbnail image
+	ImagePath     string // Alias for ThumbnailPath (deprecated)
+	Success       bool
+	Error         string
 }
 
 // PluginError represents an error that occurred during plugin execution
