@@ -1,18 +1,51 @@
 #!/bin/bash
 
 # Complete iMessages Book Generation Pipeline
-# Usage: ./build-book.sh [title] [author] [output_dir] [config_file]
+# Usage: ./build-book.sh [options] [title] [author] [output_dir]
+# Options:
+#   --config FILE    Use config file
+#
+# Or legacy positional: ./build-book.sh [title] [author] [output_dir] [config_file]
 
 set -e
 
-TITLE="${1:-Our Group Chat}"
-AUTHOR="${2:-}"
+# Parse arguments
+TITLE=""
+AUTHOR=""
+OUTPUT_DIR=""
+CONFIG_FILE=""
+
+# First pass - look for flags
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --config)
+            CONFIG_FILE="$2"
+            shift 2
+            ;;
+        *)
+            # Not a flag, save as positional argument
+            if [ -z "$TITLE" ]; then
+                TITLE="$1"
+            elif [ -z "$AUTHOR" ]; then
+                AUTHOR="$1"
+            elif [ -z "$OUTPUT_DIR" ]; then
+                OUTPUT_DIR="$1"
+            elif [ -z "$CONFIG_FILE" ]; then
+                # Legacy: 4th positional arg is config file
+                CONFIG_FILE="$1"
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Set defaults
+TITLE="${TITLE:-Our Group Chat}"
 YEAR=$(date +"%Y")
 MONTH=$(date +"%m")
 DAY=$(date +"%d")
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-OUTPUT_DIR="${3:-output/$YEAR/$MONTH/$DAY/$TIMESTAMP}"
-CONFIG_FILE="${4:-}"
+OUTPUT_DIR="${OUTPUT_DIR:-output/$YEAR/$MONTH/$DAY/$TIMESTAMP}"
 
 echo "📚 iMessages Book Generation Pipeline"
 echo "Title: ${TITLE}"
@@ -29,11 +62,18 @@ mkdir -p "${OUTPUT_DIR}"
 # Step 1: Generate TeX
 echo "🔄 Step 1: Generating TeX from database..."
 if [ -n "${CONFIG_FILE}" ]; then
-    ./threadbound generate \
-        --config "${CONFIG_FILE}" \
-        --title "${TITLE}" \
-        --author "${AUTHOR}" \
-        --output "${OUTPUT_DIR}/book.tex"
+    # When using config file, only pass title/author if explicitly provided (not defaults)
+    CMD="./threadbound generate --config \"${CONFIG_FILE}\" --output \"${OUTPUT_DIR}/book.tex\""
+
+    # Only override config file values if they were explicitly provided as arguments
+    if [ "$TITLE" != "Our Group Chat" ] && [ -n "$TITLE" ]; then
+        CMD="$CMD --title \"${TITLE}\""
+    fi
+    if [ -n "${AUTHOR}" ]; then
+        CMD="$CMD --author \"${AUTHOR}\""
+    fi
+
+    eval $CMD
 else
     ./threadbound generate \
         --title "${TITLE}" \
