@@ -1,20 +1,19 @@
 # ThreadBound - iMessages Book Generator
 
-A Go-based toolchain to convert iMessages database exports into a formatted book using Pandoc.
+A Go-based toolchain to convert iMessages database exports into a formatted book.
 
 ## Features
 
 - **SQLite Database Processing**: Extracts messages, contacts, and attachments from iMessages database
 - **Conversation Layout**: Formats messages as a conversation with sender identification and timestamps
 - **Attachment Support**: Includes images and files in the book (with format conversion)
-- **Professional PDF Output**: Uses Pandoc with custom LaTeX templates for high-quality books
+- **Professional PDF Output**: Uses XeLaTeX with custom LaTeX templates for high-quality books
 - **Custom Page Size**: Optimized for 8.5" × 5.5" book format
 - **CLI Interface**: Easy-to-use command line tools
 
 ## Requirements
 
 - **Go 1.22+**: For building and running the tool
-- **Pandoc**: For converting Markdown to PDF
 - **XeLaTeX**: PDF engine for high-quality output
 - **System Fonts**: Helvetica and Courier (or similar)
 
@@ -22,18 +21,12 @@ A Go-based toolchain to convert iMessages database exports into a formatted book
 
 **macOS:**
 ```bash
-# Install Pandoc
-brew install pandoc
-
 # Install LaTeX (MacTeX)
 brew install --cask mactex
 ```
 
 **Linux:**
 ```bash
-# Install Pandoc
-sudo apt-get install pandoc
-
 # Install LaTeX
 sudo apt-get install texlive-xetex texlive-fonts-recommended
 ```
