@@ -423,6 +423,9 @@ func (g *Generator) writeSentMessageBubble(builder *strings.Builder, text string
 		processedText = g.urlProcessor.ReplaceURLsWithImages(text, urlThumbnails)
 	}
 
+	// Remove object replacement character (U+FFFC) that shows as [obj] in PDF
+	processedText = strings.ReplaceAll(processedText, "\uFFFC", "")
+
 	// Escape LaTeX special characters
 	escapedText := g.escapeLaTeX(processedText)
 
@@ -452,6 +455,9 @@ func (g *Generator) writeReceivedMessageBubble(builder *strings.Builder, text st
 	if urlThumbnails != nil {
 		processedText = g.urlProcessor.ReplaceURLsWithImages(text, urlThumbnails)
 	}
+
+	// Remove object replacement character (U+FFFC) that shows as [obj] in PDF
+	processedText = strings.ReplaceAll(processedText, "\uFFFC", "")
 
 	// Escape LaTeX special characters
 	escapedText := g.escapeLaTeX(processedText)

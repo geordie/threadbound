@@ -137,17 +137,10 @@ func TestGenerateBook(t *testing.T) {
 		OutputPath:   "test_book.md",
 		PageWidth:    "5.5in",
 		PageHeight:   "8.5in",
+		TemplateDir:  "../../../templates",
 	}
 
-	var generator *Generator
-	func() {
-		// Change to project root to load templates
-		originalDir, _ := os.Getwd()
-		defer os.Chdir(originalDir)
-		os.Chdir("../..")
-
-		generator = New(config, nil) // Pass nil for db since we're not using URL processing
-	}()
+	generator := New(config, nil) // Pass nil for db since we're not using URL processing
 
 	messages, handles, reactions := getMockData()
 
@@ -192,16 +185,10 @@ func TestReceivedMessageReactions(t *testing.T) {
 		OutputPath:      "test_book.md",
 		PageWidth:       "5.5in",
 		PageHeight:      "8.5in",
+		TemplateDir:     "../../../templates",
 	}
 
-	var generator *Generator
-	func() {
-		originalDir, _ := os.Getwd()
-		defer os.Chdir(originalDir)
-		os.Chdir("../..")
-
-		generator = New(config, nil)
-	}()
+	generator := New(config, nil)
 
 	messages, handles, reactions := getMockData()
 
@@ -230,16 +217,10 @@ func TestSentMessageReactions(t *testing.T) {
 		OutputPath:      "test_book.md",
 		PageWidth:       "5.5in",
 		PageHeight:      "8.5in",
+		TemplateDir:     "../../../templates",
 	}
 
-	var generator *Generator
-	func() {
-		originalDir, _ := os.Getwd()
-		defer os.Chdir(originalDir)
-		os.Chdir("../..")
-
-		generator = New(config, nil)
-	}()
+	generator := New(config, nil)
 
 	messages, handles, reactions := getMockData()
 
@@ -270,14 +251,8 @@ func TestMessageBubbleGeneration(t *testing.T) {
 		PageHeight:      "8.5in",
 	}
 
-	var generator *Generator
-	func() {
-		originalDir, _ := os.Getwd()
-		defer os.Chdir(originalDir)
-		os.Chdir("../..")
-
-		generator = New(config, nil)
-	}()
+	config.TemplateDir = "../../../templates"
+	generator := New(config, nil)
 
 	_, _, reactions := getMockData()
 
@@ -332,16 +307,10 @@ func TestSentMessageBubbleGeneration(t *testing.T) {
 		OutputPath:      "test_book.md",
 		PageWidth:       "5.5in",
 		PageHeight:      "8.5in",
+		TemplateDir:     "../../../templates",
 	}
 
-	var generator *Generator
-	func() {
-		originalDir, _ := os.Getwd()
-		defer os.Chdir(originalDir)
-		os.Chdir("../..")
-
-		generator = New(config, nil)
-	}()
+	generator := New(config, nil)
 
 	_, _, reactions := getMockData()
 
@@ -378,9 +347,77 @@ func TestSentMessageBubbleGeneration(t *testing.T) {
 	}
 }
 
+// TestObjectReplacementCharacterRemoval tests that U+FFFC is removed from messages
+func TestObjectReplacementCharacterRemoval(t *testing.T) {
+	// Skip if we can't find template files
+	if skipWithoutTemplates(t) {
+		return
+	}
+
+	config := &models.BookConfig{
+		Title:           "Test Book",
+		Author:          "Test Author",
+		IncludeImages:   false,
+		IncludePreviews: false,
+		OutputPath:      "test_book.md",
+		PageWidth:       "5.5in",
+		PageHeight:      "8.5in",
+		TemplateDir:     "../../../templates",
+	}
+
+	generator := New(config, nil)
+
+	// Test sent message with object replacement character
+	var sentBuilder strings.Builder
+	generator.writeSentMessageBubble(
+		&sentBuilder,
+		"Check this out \uFFFC isn't that cool?",
+		"10:00 AM",
+		nil,
+		nil,
+	)
+
+	sentResult := sentBuilder.String()
+	if strings.Contains(sentResult, "\uFFFC") {
+		t.Error("Sent message should not contain object replacement character (U+FFFC)")
+	}
+	if !strings.Contains(sentResult, "Check this out") {
+		t.Error("Sent message should contain the text before the character")
+	}
+	if !strings.Contains(sentResult, "isn't that cool?") {
+		t.Error("Sent message should contain the text after the character")
+	}
+
+	// Test received message with object replacement character
+	var receivedBuilder strings.Builder
+	generator.writeReceivedMessageBubble(
+		&receivedBuilder,
+		"Look at this ￼ amazing thing",
+		"10:05 AM",
+		"John Doe",
+		true,
+		true,
+		nil,
+		nil,
+	)
+
+	receivedResult := receivedBuilder.String()
+	if strings.Contains(receivedResult, "\uFFFC") || strings.Contains(receivedResult, "￼") {
+		t.Error("Received message should not contain object replacement character")
+	}
+	if !strings.Contains(receivedResult, "Look at this") {
+		t.Error("Received message should contain the text before the character")
+	}
+	if !strings.Contains(receivedResult, "amazing thing") {
+		t.Error("Received message should contain the text after the character")
+	}
+
+	t.Logf("Successfully removed object replacement character from both sent and received messages")
+}
+
 // Helper function to skip tests when template files aren't available
 func skipWithoutTemplates(t *testing.T) bool {
-	templatePath := "../../templates/sent-message.tex"
+	templatePath := "../../../templates/sent-message.tex"
 	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
 		t.Skip("Template files not available - running in extracted test environment")
 		return true
