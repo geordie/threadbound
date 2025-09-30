@@ -25,7 +25,7 @@ threadbound.yaml
 !README.md
 *.pdf
 output_*/
-output/
+/output/
 Attachments/
 
 # Converted and processed images
