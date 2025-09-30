@@ -117,7 +117,7 @@ func (db *DB) GetAttachmentsForMessage(messageID int) ([]models.Attachment, erro
 }
 
 // GetHandles retrieves all contact handles
-func (db *DB) GetHandles() (map[int]models.Handle, error) {
+func (db *DB) GetHandles(contactNames map[string]string) (map[int]models.Handle, error) {
 	query := `
 		SELECT ROWID, service, id, country
 		FROM handle
@@ -137,12 +137,28 @@ func (db *DB) GetHandles() (map[int]models.Handle, error) {
 			return nil, fmt.Errorf("failed to scan handle: %w", err)
 		}
 
-		// Simple display name logic - could be enhanced
-		handle.DisplayName = handle.Contact
-		if handle.Service == "iMessage" {
-			// Extract name from email if it's an email
-			if len(handle.Contact) > 0 && handle.Contact[0] != '+' {
+		// Check if there's a custom name mapping for this contact
+		if contactNames != nil {
+			if customName, exists := contactNames[handle.Contact]; exists {
+				handle.DisplayName = customName
+			} else {
+				// Use default display name logic
 				handle.DisplayName = handle.Contact
+				if handle.Service == "iMessage" {
+					// Extract name from email if it's an email
+					if len(handle.Contact) > 0 && handle.Contact[0] != '+' {
+						handle.DisplayName = handle.Contact
+					}
+				}
+			}
+		} else {
+			// Use default display name logic
+			handle.DisplayName = handle.Contact
+			if handle.Service == "iMessage" {
+				// Extract name from email if it's an email
+				if len(handle.Contact) > 0 && handle.Contact[0] != '+' {
+					handle.DisplayName = handle.Contact
+				}
 			}
 		}
 

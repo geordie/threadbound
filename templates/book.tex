@@ -63,7 +63,7 @@
 
 % Title formatting
 \titleformat{\chapter}[display]
-  {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+  {\normalfont\huge\bfseries}{}{0pt}{\Huge}
 \titleformat{\section}
   {\normalfont\Large\bfseries}{}{0em}{}
 \titleformat{\subsection}
@@ -126,6 +126,7 @@
 
 % Table of contents formatting
 \setcounter{tocdepth}{1}
+\setcounter{secnumdepth}{0}
 \renewcommand{\contentsname}{Table of Contents}
 
 % Variable definitions will be injected here

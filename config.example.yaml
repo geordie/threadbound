@@ -1,0 +1,27 @@
+# Example configuration file for threadbound
+# Usage: threadbound generate --config config.yaml
+
+# Book metadata
+title: "Our Messages"
+author: "Your Name"
+
+# Database and file paths
+database_path: "chat.db"
+attachments_path: "Attachments"
+output_path: "book.tex"
+template_dir: "templates"
+
+# Output options
+include_images: true
+include_previews: true
+page_width: "5.5in"
+page_height: "8.5in"
+
+# Contact name mappings
+# Map contact IDs (phone numbers or email addresses) to custom display names
+# This allows you to use friendly names instead of phone numbers in the book
+contact_names:
+  "+15551234567": "Alice"
+  "+15559876543": "Bob"
+  "friend@example.com": "Charlie"
+  # Add more mappings as needed

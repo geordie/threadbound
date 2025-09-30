@@ -104,6 +104,11 @@ func loadConfig(cmd *cobra.Command, args []string) error {
 			config.PageHeight = fileConfig.PageHeight
 		}
 
+		// Merge contact names from config file
+		if fileConfig.ContactNames != nil {
+			config.ContactNames = fileConfig.ContactNames
+		}
+
 		// IncludePreviews is always enabled for now
 		config.IncludePreviews = true
 	}

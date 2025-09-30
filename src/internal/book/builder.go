@@ -57,7 +57,7 @@ func (b *Builder) GenerateWithFormat(format string) error {
 	fmt.Printf("✅ Found %d messages\n", len(messages))
 
 	// Get handles (contacts)
-	handles, err := b.db.GetHandles()
+	handles, err := b.db.GetHandles(b.config.ContactNames)
 	if err != nil {
 		return fmt.Errorf("failed to get handles: %w", err)
 	}
@@ -161,7 +161,7 @@ func (b *Builder) GetStats() (*models.BookStats, error) {
 		return nil, err
 	}
 
-	handles, err := b.db.GetHandles()
+	handles, err := b.db.GetHandles(b.config.ContactNames)
 	if err != nil {
 		return nil, err
 	}

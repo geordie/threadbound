@@ -112,16 +112,17 @@ type Handle struct {
 
 // BookConfig holds configuration for book generation
 type BookConfig struct {
-	Title           string `yaml:"title"`
-	Author          string `yaml:"author"`
-	DatabasePath    string `yaml:"database_path"`
-	AttachmentsPath string `yaml:"attachments_path"`
-	OutputPath      string `yaml:"output_path"`
-	TemplateDir     string `yaml:"template_dir"`
-	IncludeImages   bool   `yaml:"include_images"`
-	IncludePreviews bool   `yaml:"include_previews"`
-	PageWidth       string `yaml:"page_width"`
-	PageHeight      string `yaml:"page_height"`
+	Title           string            `yaml:"title"`
+	Author          string            `yaml:"author"`
+	DatabasePath    string            `yaml:"database_path"`
+	AttachmentsPath string            `yaml:"attachments_path"`
+	OutputPath      string            `yaml:"output_path"`
+	TemplateDir     string            `yaml:"template_dir"`
+	IncludeImages   bool              `yaml:"include_images"`
+	IncludePreviews bool              `yaml:"include_previews"`
+	PageWidth       string            `yaml:"page_width"`
+	PageHeight      string            `yaml:"page_height"`
+	ContactNames    map[string]string `yaml:"contact_names"` // Maps contact IDs to custom display names
 }
 
 // LoadConfigFromFile loads configuration from a YAML file
