@@ -1,0 +1,2 @@
+[{{.Timestamp}}] {{.Sender}}: {{.Text}}{{if .Reactions}} {{range .Reactions}}{{.ReactionEmoji}}{{end}}{{end}}{{if .Attachments}}
+  Attachments: {{range $i, $a := .Attachments}}{{if $i}}, {{end}}{{$a.Filename}}{{end}}{{end}}

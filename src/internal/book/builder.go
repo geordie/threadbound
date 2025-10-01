@@ -3,6 +3,8 @@ package book
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"threadbound/internal/attachments"
 	"threadbound/internal/database"
@@ -35,9 +37,27 @@ func (b *Builder) Close() error {
 	return b.db.Close()
 }
 
-// Generate creates the book using the default output format (TeX)
+// Generate creates the book using the output format determined by file extension
 func (b *Builder) Generate() error {
-	return b.GenerateWithFormat("tex")
+	// Detect format from output file extension
+	format := b.detectFormat()
+	return b.GenerateWithFormat(format)
+}
+
+// detectFormat determines the output format from the file extension
+func (b *Builder) detectFormat() string {
+	ext := strings.TrimPrefix(filepath.Ext(b.config.OutputPath), ".")
+	if ext == "" {
+		return "tex" // Default to TeX if no extension
+	}
+
+	// Check if the format exists in the registry
+	if output.Exists(ext) {
+		return ext
+	}
+
+	// Default to TeX for unknown extensions
+	return "tex"
 }
 
 // GenerateWithFormat creates the book using the specified output plugin

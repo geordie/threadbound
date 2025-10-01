@@ -1,0 +1,4 @@
+=== {{.Title}} ==={{if .Author}}
+by {{.Author}}{{end}}{{if .Stats}}
+Messages: {{.Stats.TotalMessages}} | Text Messages: {{.Stats.TextMessages}} | Contacts: {{.Stats.TotalContacts}}{{if not .Stats.StartDate.IsZero}} | Date Range: {{.Stats.StartDate.Format "Jan 2, 2006"}} - {{.Stats.EndDate.Format "Jan 2, 2006"}}{{end}}{{end}}
+

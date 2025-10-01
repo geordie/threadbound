@@ -5,6 +5,7 @@ import (
 	"threadbound/internal/plugins/html"
 	"threadbound/internal/plugins/pdf"
 	"threadbound/internal/plugins/tex"
+	"threadbound/internal/plugins/text"
 )
 
 // RegisterBuiltinPlugins registers all built-in output format plugins
@@ -24,6 +25,12 @@ func RegisterBuiltinPlugins() error {
 	// Register HTML plugin
 	htmlPlugin := html.NewHTMLPlugin()
 	if err := output.Register(htmlPlugin); err != nil {
+		return err
+	}
+
+	// Register Text plugin
+	textPlugin := text.NewTextPlugin()
+	if err := output.Register(textPlugin); err != nil {
 		return err
 	}
 

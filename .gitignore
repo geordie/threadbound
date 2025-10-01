@@ -1,9 +1,5 @@
-# Compiled binaries (in root directory only)
-/threadbound
-*.exe
-*.dll
-*.so
-*.dylib
+# Compiled binaries
+**/threadbound
 
 # Go build artifacts
 *.test
