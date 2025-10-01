@@ -18,6 +18,7 @@ threadbound.yaml
 
 # Generated content and output
 *.md
+*.txt
 !README.md
 *.pdf
 output_*/
