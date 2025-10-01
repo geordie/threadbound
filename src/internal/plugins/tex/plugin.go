@@ -254,7 +254,7 @@ func (p *TeXPlugin) writeMessages(builder *strings.Builder, ctx *output.Generati
 		}
 
 		// Determine sender
-		senderName := output.GetSenderName(msg, ctx.Handles)
+		senderName := output.GetSenderNameWithConfig(msg, ctx.Handles, ctx.Config)
 
 		// Check if we should show sender name (when it changes)
 		showSender := (senderName != lastSender)

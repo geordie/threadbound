@@ -123,6 +123,7 @@ type BookConfig struct {
 	PageWidth       string            `yaml:"page_width"`
 	PageHeight      string            `yaml:"page_height"`
 	ContactNames    map[string]string `yaml:"contact_names"` // Maps contact IDs to custom display names
+	MyName          string            `yaml:"my_name"`       // Custom name for messages sent by you (default: "Me")
 }
 
 // LoadConfigFromFile loads configuration from a YAML file

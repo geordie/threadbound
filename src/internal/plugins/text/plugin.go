@@ -133,7 +133,7 @@ Messages: {{.Stats.TotalMessages}} | Text Messages: {{.Stats.TextMessages}} | Co
 		content = `--- {{.FormattedDate}} ---
 `
 	case "message.txt":
-		content = `[{{.Timestamp}}] {{.Sender}}: {{.Text}}{{if .Reactions}} {{range .Reactions}}{{.ReactionEmoji}}{{end}}{{end}}{{if .Attachments}}
+		content = `[{{.Timestamp}}] {{.Sender}}: {{.Text}}{{if .Reactions}} {{range .Reactions}}[{{.SenderName}}: {{.ReactionEmoji}}]{{end}}{{end}}{{if .Attachments}}
   Attachments: {{range $i, $a := .Attachments}}{{if $i}}, {{end}}{{$a.Filename}}{{end}}{{end}}`
 	default:
 		return fmt.Errorf("unknown template: %s", name)
@@ -208,7 +208,7 @@ func (t *TextPlugin) generateMessage(msg models.Message, ctx *output.GenerationC
 		return "", nil
 	}
 
-	senderName := output.GetSenderName(msg, ctx.Handles)
+	senderName := output.GetSenderNameWithConfig(msg, ctx.Handles, ctx.Config)
 	timeStr := output.FormatTimestamp(msg.FormattedDate, "time")
 	reactions := ctx.Reactions[msg.GUID]
 
@@ -216,7 +216,7 @@ func (t *TextPlugin) generateMessage(msg models.Message, ctx *output.GenerationC
 		msg, senderName, timeStr, true, true, reactions,
 	)
 
-	messageTemplate := `[{{.Timestamp}}] {{.Sender}}: {{.Text}}{{if .Reactions}} {{range .Reactions}}{{.ReactionEmoji}}{{end}}{{end}}{{if .Attachments}}
+	messageTemplate := `[{{.Timestamp}}] {{.Sender}}: {{.Text}}{{if .Reactions}} {{range .Reactions}}[{{.SenderName}}: {{.ReactionEmoji}}]{{end}}{{end}}{{if .Attachments}}
   Attachments: {{range $i, $a := .Attachments}}{{if $i}}, {{end}}{{$a.Filename}}{{end}}{{end}}`
 
 	tmpl, err := template.New("message").Parse(messageTemplate)

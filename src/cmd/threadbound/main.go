@@ -109,6 +109,11 @@ func loadConfig(cmd *cobra.Command, args []string) error {
 			config.ContactNames = fileConfig.ContactNames
 		}
 
+		// Merge my_name from config file
+		if fileConfig.MyName != "" {
+			config.MyName = fileConfig.MyName
+		}
+
 		// IncludePreviews is always enabled for now
 		config.IncludePreviews = true
 	}

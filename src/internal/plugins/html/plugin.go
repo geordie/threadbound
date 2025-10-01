@@ -76,7 +76,7 @@ func (h *HTMLPlugin) prepareTemplateData(ctx *output.GenerationContext) *HTMLTem
 		}
 
 		dateKey := msg.FormattedDate.Format("2006-01-02")
-		senderName := output.GetSenderName(msg, ctx.Handles)
+		senderName := output.GetSenderNameWithConfig(msg, ctx.Handles, ctx.Config)
 		timeStr := output.FormatTimestamp(msg.FormattedDate, "time")
 
 		// Get reactions for this message

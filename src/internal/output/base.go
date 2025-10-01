@@ -133,6 +133,24 @@ func GetSenderName(msg models.Message, handles map[int]models.Handle) string {
 	return "Unknown"
 }
 
+// GetSenderNameWithConfig determines the display name for a message sender with config override
+func GetSenderNameWithConfig(msg models.Message, handles map[int]models.Handle, config *models.BookConfig) string {
+	if msg.IsFromMe {
+		if config != nil && config.MyName != "" {
+			return config.MyName
+		}
+		return "Me"
+	}
+
+	if msg.HandleID != nil {
+		if handle, exists := handles[*msg.HandleID]; exists {
+			return handle.DisplayName
+		}
+	}
+
+	return "Unknown"
+}
+
 // IsImageFile checks if a filename represents an image
 func IsImageFile(filename string) bool {
 	if filename == "" {
