@@ -33,19 +33,12 @@ Attachments/
 **/*.jpeg
 **/*.png
 **/*_processed.*
-!templates/**/*.jpg
-!templates/**/*.jpeg
-!templates/**/*.png
 
 # Temporary files
 test-simple.*
 /book.*
 final-book.*
 clean-book.*
-
-# But keep template files
-!templates/*.tex
-!templates/*.css
 
 # System files
 .DS_Store
