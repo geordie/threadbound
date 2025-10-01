@@ -1,5 +1,6 @@
-# Compiled binaries
-**/threadbound
+# Compiled binaries (files only, not directories)
+threadbound
+src/threadbound
 
 # Go build artifacts
 *.test
@@ -16,6 +17,7 @@ chat.db*
 config.yaml
 threadbound.yaml
 
+# Generated content and output
 # Generated content and output
 *.md
 *.txt
