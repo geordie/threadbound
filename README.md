@@ -54,7 +54,7 @@ author: "The Squad"
 database_path: "chat.db"
 attachments_path: "Attachments"
 output_path: "book.md"
-template_dir: "templates"
+template_dir: "src/internal/templates/tex"
 include_images: true
 include_previews: true
 page_width: "5.5in"
@@ -101,7 +101,7 @@ page_height: "8.5in"
 ```bash
 ./src/threadbound build-pdf \
     --input book.md \
-    --template-dir templates \
+    --template-dir src/internal/templates/tex \
     --page-width 5.5in \
     --page-height 8.5in
 ```
@@ -125,7 +125,7 @@ Run `./src/threadbound [command] --help` to see all available options for each c
 
 **Build-PDF command flags:**
 - `--input`: Input markdown file (default: "book.md")
-- `--template-dir`: Template directory (default: "templates")
+- `--template-dir`: Template directory (default: "src/internal/templates/tex")
 - `--page-width`: Page width (default: "5.5in")
 - `--page-height`: Page height (default: "8.5in")
 
@@ -143,8 +143,9 @@ threadbound/
 │   │   └── book/                   # Book building logic
 │   ├── threadbound                 # Compiled binary
 │   └── threadbound.yaml.sample     # Sample config file
-├── templates/
-│   └── book.tex                    # LaTeX template
+├── src/internal/templates/
+│   └── tex/
+│       └── book.tex                # LaTeX templates
 ├── build-book.sh                   # Complete pipeline script
 └── README.md
 ```
@@ -164,7 +165,7 @@ threadbound/
 ### Build PDF Command
 
 - `--input`: Input markdown file (default: `book.md`)
-- `--template-dir`: Template directory (default: `templates`)
+- `--template-dir`: Template directory (default: `src/internal/templates/tex`)
 - `--page-width`: Page width (default: `5.5in`)
 - `--page-height`: Page height (default: `8.5in`)
 
@@ -172,7 +173,7 @@ threadbound/
 
 ### LaTeX Template
 
-Edit `templates/book.tex` to customize:
+Edit `src/internal/templates/tex/book.tex` to customize:
 - Page layout and margins
 - Font choices
 - Message bubble styling
@@ -200,7 +201,7 @@ Modify `internal/markdown/generator.go` to change:
 
 ### PDF Generation Issues
 
-1. **Font not found**: Update `templates/book.tex` with available system fonts
+1. **Font not found**: Update `src/internal/templates/tex/book.tex` with available system fonts
 2. **HEIC images**: Consider converting to JPEG for better PDF compatibility
 3. **Large files**: Use `--include-images=false` for text-only version
 

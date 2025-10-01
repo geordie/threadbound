@@ -58,7 +58,7 @@ func init() {
 
 	// Build command flags
 	buildCmd.Flags().StringVar(&config.OutputPath, "input", "book.tex", "Input TeX file")
-	buildCmd.Flags().StringVar(&config.TemplateDir, "template-dir", "templates", "Template directory")
+	buildCmd.Flags().StringVar(&config.TemplateDir, "template-dir", "internal/templates/tex", "Template directory")
 	buildCmd.Flags().StringVar(&config.PageWidth, "page-width", "5.5in", "Page width")
 	buildCmd.Flags().StringVar(&config.PageHeight, "page-height", "8.5in", "Page height")
 

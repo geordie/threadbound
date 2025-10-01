@@ -97,7 +97,7 @@ if [ -n "${CONFIG_FILE}" ]; then
 else
     ./threadbound build-pdf \
         --input "${OUTPUT_DIR}/book.tex" \
-        --template-dir templates
+        --template-dir src/internal/templates/tex
 fi
 
 if [ $? -ne 0 ]; then

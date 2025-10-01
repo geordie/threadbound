@@ -73,7 +73,7 @@ func (g *Generator) executeTemplate(tmpl *template.Template, templateName string
 func (g *Generator) loadMessageTemplates() {
 	templateDir := g.config.TemplateDir
 	if templateDir == "" {
-		templateDir = "templates"
+		templateDir = "internal/templates/tex"
 	}
 	g.sentMessageTemplate = g.loadTemplate(filepath.Join(templateDir, "sent-message.tex"), "sent-message")
 	g.receivedMessageTemplate = g.loadTemplate(filepath.Join(templateDir, "received-message.tex"), "received-message")
@@ -188,7 +188,11 @@ func (g *Generator) writeURLSetupFile() {
 }
 `
 
-	err := ioutil.WriteFile("templates/url-setup.tex", []byte(content), 0644)
+	templateDir := g.config.TemplateDir
+	if templateDir == "" {
+		templateDir = "internal/templates/tex"
+	}
+	err := ioutil.WriteFile(filepath.Join(templateDir, "url-setup.tex"), []byte(content), 0644)
 	if err != nil {
 		fmt.Printf("⚠️  Warning: Could not write URL setup file: %v\n", err)
 	}

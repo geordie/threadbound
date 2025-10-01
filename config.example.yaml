@@ -9,7 +9,7 @@ author: "Your Name"
 database_path: "chat.db"
 attachments_path: "Attachments"
 output_path: "book.tex"
-template_dir: "templates"
+template_dir: "src/internal/templates/tex"
 
 # Output options
 include_images: true
