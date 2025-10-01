@@ -311,6 +311,9 @@ func (p *TeXPlugin) writeMessageBubble(builder *strings.Builder, ctx *output.Gen
 
 // writeSentMessage formats a message sent by the user
 func (p *TeXPlugin) writeSentMessage(builder *strings.Builder, tm *output.TemplateManager, text, timeStr string, reactions []models.Reaction) {
+	// Convert Unicode emojis to LaTeX format for reactions
+	texReactions := p.convertReactionsToTeX(reactions)
+
 	data := struct {
 		Text      string
 		Timestamp string
@@ -318,7 +321,7 @@ func (p *TeXPlugin) writeSentMessage(builder *strings.Builder, tm *output.Templa
 	}{
 		Text:      text,
 		Timestamp: timeStr,
-		Reactions: reactions,
+		Reactions: texReactions,
 	}
 
 	result, err := tm.ExecuteTemplate("sent-message.tex", data)
@@ -335,6 +338,9 @@ func (p *TeXPlugin) writeSentMessage(builder *strings.Builder, tm *output.Templa
 func (p *TeXPlugin) writeReceivedMessage(builder *strings.Builder, tm *output.TemplateManager, text, timeStr, senderName string,
 	showSender, showTimestamp bool, reactions []models.Reaction) {
 
+	// Convert Unicode emojis to LaTeX format for reactions
+	texReactions := p.convertReactionsToTeX(reactions)
+
 	data := struct {
 		Text          string
 		Timestamp     string
@@ -348,7 +354,7 @@ func (p *TeXPlugin) writeReceivedMessage(builder *strings.Builder, tm *output.Te
 		Sender:        senderName,
 		ShowSender:    showSender,
 		ShowTimestamp: showTimestamp,
-		Reactions:     reactions,
+		Reactions:     texReactions,
 	}
 
 	result, err := tm.ExecuteTemplate("received-message.tex", data)
@@ -493,6 +499,43 @@ func (p *TeXPlugin) isImageFile(ext string) bool {
 		}
 	}
 	return false
+}
+
+// convertReactionsToTeX converts Unicode emoji reactions to LaTeX format
+func (p *TeXPlugin) convertReactionsToTeX(reactions []models.Reaction) []models.Reaction {
+	if len(reactions) == 0 {
+		return reactions
+	}
+
+	texReactions := make([]models.Reaction, len(reactions))
+	copy(texReactions, reactions)
+
+	for i := range texReactions {
+		texReactions[i].ReactionEmoji = p.unicodeToTeX(texReactions[i].ReactionEmoji)
+	}
+
+	return texReactions
+}
+
+// unicodeToTeX converts Unicode emoji to LaTeX emojifont format
+func (p *TeXPlugin) unicodeToTeX(emoji string) string {
+	emojiMap := map[string]string{
+		"❤️":  `{\emojifont\symbol{"2764}}`,
+		"❤":   `{\emojifont\symbol{"2764}}`,
+		"👍":  `{\emojifont\symbol{"1F44D}}`,
+		"👎":  `{\emojifont\symbol{"1F44E}}`,
+		"😂":  `{\emojifont\symbol{"1F602}}`,
+		"‼️":  `{\emojifont\symbol{"2757}}`,
+		"‼":   `{\emojifont\symbol{"2757}}`,
+		"❓":  `{\emojifont\symbol{"2753}}`,
+	}
+
+	if texEmoji, exists := emojiMap[emoji]; exists {
+		return texEmoji
+	}
+
+	// Return as-is if no mapping found
+	return emoji
 }
 
 // ValidateConfig validates the TeX plugin configuration

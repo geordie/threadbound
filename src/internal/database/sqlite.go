@@ -241,25 +241,25 @@ func (db *DB) GetReactions(handles map[int]models.Handle) (map[string][]models.R
 	return reactions, rows.Err()
 }
 
-// reactionTypeToEmoji converts iMessage reaction types to LaTeX emoji commands
+// reactionTypeToEmoji converts iMessage reaction types to Unicode emoji
 func reactionTypeToEmoji(reactionType int) string {
 	switch reactionType {
 	case 2000:
-		return "{\\emojifont\\symbol{\"2764}}" // Love
+		return "❤️" // Love
 	case 2001:
-		return "{\\emojifont\\symbol{\"1F44D}}" // Like/Thumbs up
+		return "👍" // Like/Thumbs up
 	case 2002:
-		return "{\\emojifont\\symbol{\"1F44E}}" // Dislike/Thumbs down
+		return "👎" // Dislike/Thumbs down
 	case 2003:
-		return "{\\emojifont\\symbol{\"1F602}}" // Laugh/Ha ha
+		return "😂" // Laugh/Ha ha
 	case 2004:
-		return "{\\emojifont\\symbol{\"2757}}" // Emphasize/!!
+		return "‼️" // Emphasize/!!
 	case 2005:
-		return "{\\emojifont\\symbol{\"2764}}" // Love (alternative)
+		return "❤️" // Love (alternative)
 	case 2006:
-		return "{\\emojifont\\symbol{\"2753}}" // Question/?
+		return "❓" // Question/?
 	default:
-		return "{\\emojifont\\symbol{\"2764}}" // Default fallback
+		return "❤️" // Default fallback
 	}
 }
 
