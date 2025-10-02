@@ -1,16 +1,24 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
+	"threadbound/internal/api"
 	"threadbound/internal/book"
 	"threadbound/internal/models"
+	"threadbound/internal/service"
 )
 
 var config models.BookConfig
 var configFile string
+var apiPort int
 
 var rootCmd = &cobra.Command{
 	Use:   "threadbound",
@@ -33,6 +41,13 @@ var buildCmd = &cobra.Command{
 	Long:  `Convert the generated TeX to PDF using XeLaTeX`,
 	PreRunE: loadConfig,
 	RunE:  runBuildPDF,
+}
+
+var serveCmd = &cobra.Command{
+	Use:   "serve",
+	Short: "Start API server",
+	Long:  `Start the HTTP API server for generating books via REST API`,
+	RunE:  runServe,
 }
 
 func init() {
@@ -62,8 +77,12 @@ func init() {
 	buildCmd.Flags().StringVar(&config.PageWidth, "page-width", "5.5in", "Page width")
 	buildCmd.Flags().StringVar(&config.PageHeight, "page-height", "8.5in", "Page height")
 
+	// Serve command flags
+	serveCmd.Flags().IntVar(&apiPort, "port", 8080, "API server port")
+
 	rootCmd.AddCommand(generateCmd)
 	rootCmd.AddCommand(buildCmd)
+	rootCmd.AddCommand(serveCmd)
 }
 
 // loadConfig loads configuration from file if specified, otherwise uses defaults and flags
@@ -127,15 +146,11 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Title: %s\n", config.Title)
 	fmt.Println()
 
-	// Create book builder
-	builder, err := book.New(&config)
-	if err != nil {
-		return err
-	}
-	defer builder.Close()
+	// Use service layer for generation
+	genService := service.NewGeneratorService(&config)
 
-	// Show statistics first
-	stats, err := builder.GetStats()
+	// Get and show statistics first
+	stats, err := genService.GetStats()
 	if err != nil {
 		return fmt.Errorf("failed to get stats: %w", err)
 	}
@@ -152,7 +167,8 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 
 	// Generate the book
-	return builder.Generate()
+	_, err = genService.Generate()
+	return err
 }
 
 
@@ -193,6 +209,40 @@ func runBuildPDF(cmd *cobra.Command, args []string) error {
 	// Suggest preview command
 	previewCmd := pdfBuilder.PreviewCommand(outputPDF)
 	fmt.Printf("\n📖 To preview: %s\n", previewCmd)
+
+	return nil
+}
+
+func runServe(cmd *cobra.Command, args []string) error {
+	// Create API server
+	server := api.NewServer(apiPort)
+
+	// Set up graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	// Start server in goroutine
+	errChan := make(chan error, 1)
+	go func() {
+		if err := server.Start(); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+
+	// Wait for shutdown signal or error
+	select {
+	case err := <-errChan:
+		return fmt.Errorf("server error: %w", err)
+	case <-stop:
+		fmt.Println("\n🛑 Shutting down server...")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := server.Shutdown(ctx); err != nil {
+			return fmt.Errorf("server shutdown error: %w", err)
+		}
+		fmt.Println("✅ Server stopped gracefully")
+	}
 
 	return nil
 }
