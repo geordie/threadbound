@@ -31,6 +31,9 @@ Attachments/
 **/*.jpg
 **/*.jpeg
 **/*.png
+!desktop/src-tauri/icons/*.png
+!desktop/src-tauri/icons/*.icns
+!desktop/src-tauri/icons/*.ico
 **/*_processed.*
 
 # Temporary files
@@ -59,7 +62,7 @@ Thumbs.db
 *.log
 
 # OS generated files
-Icon?
+# Icon? - commented out as it matches "icons" directories
 
 # Build directories
 /build/
@@ -75,6 +78,7 @@ test_output.*
 desktop/node_modules/
 desktop/dist/
 desktop/src-tauri/target/
+desktop/src-tauri/binaries/threadbound-*
 desktop/src-tauri/binaries/*.exe
 desktop/src-tauri/binaries/*.dll
 desktop/src-tauri/binaries/*.dylib
