@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 )
 
 // Server represents the API server
@@ -34,9 +35,31 @@ func NewServer(port int) *Server {
 
 // Start starts the API server
 func (s *Server) Start() error {
+	// Configure CORS to allow Tauri app requests
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{
+			"http://localhost:1420",
+			"tauri://localhost",
+			"http://tauri.localhost",
+			"https://tauri.localhost",
+		},
+		AllowedMethods: []string{
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodDelete,
+			http.MethodOptions,
+		},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+	})
+
+	// Wrap router with CORS middleware
+	handler := c.Handler(s.router)
+
 	s.httpServer = &http.Server{
 		Addr:         fmt.Sprintf(":%d", s.port),
-		Handler:      s.router,
+		Handler:      handler,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
