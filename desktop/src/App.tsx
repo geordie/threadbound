@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
 import "./App.css";
 
 const API_BASE = "http://localhost:8765";
@@ -19,7 +21,9 @@ interface JobStatus {
 
 function App() {
   const [dbPath, setDbPath] = useState("");
-  const [attachmentsPath, setAttachmentsPath] = useState("");
+  const [defaultFound, setDefaultFound] = useState(false);
+  const [includeAttachments, setIncludeAttachments] = useState(false);
+  const [attachmentsWarning, setAttachmentsWarning] = useState(false);
   const [title, setTitle] = useState("Our Messages");
   const [outputFormat, setOutputFormat] = useState("tex");
   const [jobId, setJobId] = useState("");
@@ -27,10 +31,66 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [healthStatus, setHealthStatus] = useState<string>("checking...");
 
-  // Check API health on mount
+  // Check for default Messages path and API health on mount
   useEffect(() => {
+    checkDefaultPath();
     checkHealth();
   }, []);
+
+  async function checkDefaultPath() {
+    try {
+      const path = await invoke<string | null>("check_default_messages_path");
+      if (path) {
+        setDbPath(path);
+        setDefaultFound(true);
+      }
+    } catch (error) {
+      console.error("Failed to check default path:", error);
+    }
+  }
+
+  async function selectDirectory() {
+    try {
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: "Select Messages Directory",
+      });
+
+      if (selected && typeof selected === "string") {
+        // Append chat.db to the selected directory
+        const dbPath = selected + "/chat.db";
+        setDbPath(dbPath);
+        setDefaultFound(true); // After manual selection, show "Change"
+      }
+    } catch (error) {
+      console.error("Failed to open directory picker:", error);
+    }
+  }
+
+  async function checkAttachmentsDirectory() {
+    if (!includeAttachments || !dbPath) {
+      setAttachmentsWarning(false);
+      return;
+    }
+
+    try {
+      // Get the directory containing chat.db
+      const dbDir = dbPath.substring(0, dbPath.lastIndexOf("/"));
+      const attachmentsPath = dbDir + "/Attachments";
+
+      const exists = await invoke<boolean>("check_directory_exists", { path: attachmentsPath });
+      setAttachmentsWarning(!exists);
+    } catch (error) {
+      console.error("Failed to check attachments directory:", error);
+      setAttachmentsWarning(true);
+    }
+  }
+
+  // Check for attachments directory when checkbox is toggled or dbPath changes
+  useEffect(() => {
+    checkAttachmentsDirectory();
+  }, [includeAttachments, dbPath]);
 
   async function checkHealth() {
     try {
@@ -56,6 +116,10 @@ function App() {
     setJobStatus(null);
 
     try {
+      // Get the directory containing chat.db
+      const dbDir = dbPath.substring(0, dbPath.lastIndexOf("/"));
+      const attachmentsPath = includeAttachments ? dbDir + "/Attachments" : "";
+
       const response = await fetch(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: {
@@ -66,7 +130,7 @@ function App() {
           attachments_path: attachmentsPath || "Attachments",
           output_path: `book.${outputFormat}`,
           title: title,
-          include_images: true,
+          include_images: includeAttachments,
         }),
       });
 
@@ -123,27 +187,39 @@ function App() {
         <h2>Settings</h2>
 
         <div className="form-group">
-          <label htmlFor="db-path">iMessages Database Path *</label>
-          <input
-            id="db-path"
-            type="text"
-            value={dbPath}
-            onChange={(e) => setDbPath(e.target.value)}
-            placeholder="~/Library/Messages/chat.db"
-          />
-          <small>Typically: ~/Library/Messages/chat.db</small>
+          <label htmlFor="db-path">Messages Location *</label>
+          <div className="input-with-button">
+            <input
+              id="db-path"
+              type="text"
+              value={dbPath}
+              onChange={(e) => setDbPath(e.target.value)}
+              placeholder="~/Library/Messages/chat.db"
+            />
+            <button
+              type="button"
+              onClick={selectDirectory}
+              className="select-btn"
+            >
+              {defaultFound ? "Change" : "Select"}
+            </button>
+          </div>
         </div>
 
         <div className="form-group">
-          <label htmlFor="attachments-path">Attachments Path</label>
-          <input
-            id="attachments-path"
-            type="text"
-            value={attachmentsPath}
-            onChange={(e) => setAttachmentsPath(e.target.value)}
-            placeholder="Attachments"
-          />
-          <small>Optional: Path to attachments directory</small>
+          <label>
+            <input
+              type="checkbox"
+              checked={includeAttachments}
+              onChange={(e) => setIncludeAttachments(e.target.checked)}
+            />
+            {" "}Include Attachments
+          </label>
+          {attachmentsWarning && includeAttachments && (
+            <div className="warning-message">
+              ⚠️ No Attachments directory found in the same folder as chat.db
+            </div>
+          )}
         </div>
 
         <div className="form-group">

@@ -93,22 +93,22 @@ h2 {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
+  color: #000000;
 }
 
-.form-group input,
+.form-group input[type="text"],
 .form-group select {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 6px;
-  color: white;
+  color: #213547;
   font-size: 1rem;
   transition: border-color 0.2s;
 }
 
-.form-group input:focus,
+.form-group input[type="text"]:focus,
 .form-group select:focus {
   outline: none;
   border-color: #646cff;
@@ -119,6 +119,34 @@ h2 {
   margin-top: 0.25rem;
   color: rgba(255, 255, 255, 0.5);
   font-size: 0.85rem;
+}
+
+.input-with-button {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.input-with-button input {
+  flex: 1;
+}
+
+.select-btn {
+  padding: 0.75rem 1.5rem;
+  background: rgba(100, 108, 255, 0.2);
+  border: 1px solid #646cff;
+  border-radius: 6px;
+  color: #646cff;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.select-btn:hover {
+  background: rgba(100, 108, 255, 0.3);
+  border-color: #535bf2;
 }
 
 .generate-btn {
@@ -200,6 +228,16 @@ h2 {
   color: #ff6b6b;
 }
 
+.warning-message {
+  padding: 0.75rem;
+  background: rgba(255, 152, 0, 0.1);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  border-radius: 6px;
+  margin-top: 0.5rem;
+  color: #f57c00;
+  font-size: 0.9rem;
+}
+
 .success-message {
   padding: 1rem;
   background: rgba(76, 175, 80, 0.1);
@@ -249,15 +287,24 @@ h2 {
     background: rgba(0, 0, 0, 0.03);
   }
 
-  .form-group input,
+  .form-group input[type="text"],
   .form-group select {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.95);
     border-color: rgba(0, 0, 0, 0.2);
     color: #213547;
   }
 
   .form-group small {
     color: rgba(0, 0, 0, 0.5);
+  }
+
+  .select-btn {
+    background: rgba(100, 108, 255, 0.1);
+    color: #535bf2;
+  }
+
+  .select-btn:hover {
+    background: rgba(100, 108, 255, 0.2);
   }
 
   .job-id {
