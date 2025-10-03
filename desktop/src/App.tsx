@@ -32,12 +32,46 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [healthStatus, setHealthStatus] = useState<string>("checking...");
 
-  // Check for default Messages path and API health on mount
+  // Load saved settings on mount
   useEffect(() => {
-    checkDefaultPath();
+    loadSavedSettings();
     checkHealth();
-    initializeOutputDir();
   }, []);
+
+  async function loadSavedSettings() {
+    // Try to load saved settings first
+    const savedDbPath = localStorage.getItem("dbPath");
+    const savedOutputDir = localStorage.getItem("outputDir");
+    const savedTitle = localStorage.getItem("title");
+    const savedOutputFormat = localStorage.getItem("outputFormat");
+    const savedIncludeAttachments = localStorage.getItem("includeAttachments");
+
+    if (savedDbPath) {
+      setDbPath(savedDbPath);
+      setDefaultFound(true);
+    } else {
+      // Only check default path if no saved path exists
+      await checkDefaultPath();
+    }
+
+    if (savedOutputDir) {
+      setOutputDir(savedOutputDir);
+    } else {
+      await initializeOutputDir();
+    }
+
+    if (savedTitle) {
+      setTitle(savedTitle);
+    }
+
+    if (savedOutputFormat) {
+      setOutputFormat(savedOutputFormat);
+    }
+
+    if (savedIncludeAttachments !== null) {
+      setIncludeAttachments(savedIncludeAttachments === "true");
+    }
+  }
 
   async function initializeOutputDir() {
     try {
@@ -120,6 +154,33 @@ function App() {
   useEffect(() => {
     checkAttachmentsDirectory();
   }, [includeAttachments, dbPath]);
+
+  // Save settings whenever they change
+  useEffect(() => {
+    if (dbPath) {
+      localStorage.setItem("dbPath", dbPath);
+    }
+  }, [dbPath]);
+
+  useEffect(() => {
+    if (outputDir) {
+      localStorage.setItem("outputDir", outputDir);
+    }
+  }, [outputDir]);
+
+  useEffect(() => {
+    if (title) {
+      localStorage.setItem("title", title);
+    }
+  }, [title]);
+
+  useEffect(() => {
+    localStorage.setItem("outputFormat", outputFormat);
+  }, [outputFormat]);
+
+  useEffect(() => {
+    localStorage.setItem("includeAttachments", includeAttachments.toString());
+  }, [includeAttachments]);
 
   async function checkHealth() {
     try {
