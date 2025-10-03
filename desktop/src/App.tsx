@@ -26,7 +26,7 @@ function App() {
   const [attachmentsWarning, setAttachmentsWarning] = useState(false);
   const [outputDir, setOutputDir] = useState("");
   const [title, setTitle] = useState("Our Messages");
-  const [outputFormat, setOutputFormat] = useState("tex");
+  const [outputFormat, setOutputFormat] = useState("pdf");
   const [jobId, setJobId] = useState("");
   const [jobStatus, setJobStatus] = useState<JobStatus | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -334,6 +334,7 @@ function App() {
             value={outputFormat}
             onChange={(e) => setOutputFormat(e.target.value)}
           >
+            <option value="pdf">PDF</option>
             <option value="tex">TeX (for PDF generation)</option>
             <option value="html">HTML</option>
             <option value="txt">Text</option>
