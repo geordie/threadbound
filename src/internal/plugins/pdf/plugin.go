@@ -2,9 +2,8 @@ package pdf
 
 import (
 	"fmt"
-	"path/filepath"
-	"strings"
 
+	"threadbound/internal/latex"
 	"threadbound/internal/models"
 	"threadbound/internal/output"
 )
@@ -53,10 +52,20 @@ func (p *PDFPlugin) Generate(ctx *output.GenerationContext) ([]byte, error) {
 	}
 	defer removeFile(tempTexPath)
 
-	// Convert TeX to PDF using XeLaTeX
-	pdfData, err := p.convertToPDF(tempTexPath, ctx.Config)
-	if err != nil {
+	// Generate temporary PDF path
+	tempPDFPath := "temp_book.pdf"
+	defer removeFile(tempPDFPath)
+
+	// Convert TeX to PDF using XeLaTeX builder
+	latexBuilder := latex.NewBuilder(ctx.Config)
+	if err := latexBuilder.BuildPDF(tempTexPath, tempPDFPath); err != nil {
 		return nil, fmt.Errorf("failed to convert to PDF: %w", err)
+	}
+
+	// Read the generated PDF file
+	pdfData, err := readFile(tempPDFPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read generated PDF: %w", err)
 	}
 
 	return pdfData, nil
@@ -115,34 +124,4 @@ func (p *PDFPlugin) GetRequiredTemplates() []string {
 		"image-placeholder.tex",
 		"attachment.tex",
 	}
-}
-
-// convertToPDF converts the TeX file to PDF using XeLaTeX
-func (p *PDFPlugin) convertToPDF(texPath string, config *models.BookConfig) ([]byte, error) {
-	// Check if XeLaTeX is available
-	if err := checkXeLaTeX(); err != nil {
-		return nil, err
-	}
-
-	// Generate temporary PDF file
-	tempPDFPath := strings.TrimSuffix(texPath, ".tex") + ".pdf"
-	defer removeFile(tempPDFPath)
-
-	// Get the directory for temporary files
-	outputDir := filepath.Dir(texPath)
-
-	// Run XeLaTeX multiple times for TOC and cross-references
-	for i := 1; i <= 3; i++ {
-		if err := runXeLaTeX(texPath, outputDir); err != nil {
-			return nil, fmt.Errorf("xelatex pass %d failed: %w", i, err)
-		}
-	}
-
-	// Read the generated PDF file
-	pdfData, err := readFile(tempPDFPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read generated PDF: %w", err)
-	}
-
-	return pdfData, nil
 }
