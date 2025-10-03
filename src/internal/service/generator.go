@@ -52,33 +52,6 @@ func (s *GeneratorService) Generate() (*GenerateResult, error) {
 	}, nil
 }
 
-// BuildPDF executes the PDF build process
-func (s *GeneratorService) BuildPDF() (*models.PDFInfo, error) {
-	// Create PDF builder
-	pdfBuilder := book.NewPDFBuilder(s.config)
-
-	// Generate output filename
-	outputPDF := "book.pdf"
-	if s.config.OutputPath != "book.tex" && len(s.config.OutputPath) > 4 && s.config.OutputPath[len(s.config.OutputPath)-4:] == ".tex" {
-		// Replace .tex extension with .pdf
-		outputPDF = s.config.OutputPath[:len(s.config.OutputPath)-4] + ".pdf"
-	}
-
-	// Build the PDF
-	err := pdfBuilder.BuildPDF(s.config.OutputPath, outputPDF)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build PDF: %w", err)
-	}
-
-	// Get PDF info
-	info, err := pdfBuilder.GetPDFInfo(outputPDF)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get PDF info: %w", err)
-	}
-
-	return info, nil
-}
-
 // GetStats returns statistics about the messages without generating
 func (s *GeneratorService) GetStats() (*models.BookStats, error) {
 	builder, err := book.New(s.config)
