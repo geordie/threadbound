@@ -2,7 +2,9 @@ package tex
 
 import (
 	"database/sql"
+	"embed"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -14,6 +16,9 @@ import (
 	"threadbound/internal/output"
 	"threadbound/internal/urlprocessor"
 )
+
+//go:embed templates/*
+var embeddedTemplates embed.FS
 
 // TeXPlugin implements the OutputPlugin interface for TeX generation
 type TeXPlugin struct {
@@ -46,8 +51,8 @@ func NewTeXPlugin() *TeXPlugin {
 
 // Generate creates a TeX document
 func (p *TeXPlugin) Generate(ctx *output.GenerationContext) ([]byte, error) {
-	// Create template manager
-	tm := output.NewTemplateManager(ctx.Config.TemplateDir)
+	// Create template manager with embedded templates
+	tm := output.NewTemplateManagerWithEmbed(ctx.Config.TemplateDir, embeddedTemplates, "templates")
 
 	// Load all required templates
 	if err := tm.LoadTemplates(p.GetRequiredTemplates()); err != nil {
@@ -127,8 +132,19 @@ func (p *TeXPlugin) processURLs(ctx *output.GenerationContext) error {
 // generateBook creates the complete TeX book content
 func (p *TeXPlugin) generateBook(ctx *output.GenerationContext, tm *output.TemplateManager) (string, error) {
 	// Read the main book template as a raw string (book.tex uses %%PLACEHOLDERS%% not Go templates)
-	templatePath := filepath.Join(ctx.Config.TemplateDir, "book.tex")
-	templateBytes, err := readTemplateFile(templatePath)
+	var templateBytes []byte
+	var err error
+
+	// Try embedded templates first
+	templateBytes, err = fs.ReadFile(embeddedTemplates, "templates/book.tex")
+	if err != nil {
+		// Fallback to filesystem if embedded file not found (for development/custom templates)
+		if ctx.Config.TemplateDir != "" {
+			templatePath := filepath.Join(ctx.Config.TemplateDir, "book.tex")
+			templateBytes, err = os.ReadFile(templatePath)
+		}
+	}
+
 	if err != nil {
 		return "", fmt.Errorf("failed to read book.tex: %w", err)
 	}
@@ -545,11 +561,8 @@ func (p *TeXPlugin) ValidateConfig(config *models.BookConfig) error {
 		return err
 	}
 
-	// Check for required template directory
-	if config.TemplateDir == "" {
-		return fmt.Errorf("template directory is required for TeX generation")
-	}
-
+	// Template directory is optional now (we have embedded templates)
+	// It's only needed if user wants custom templates
 	return nil
 }
 

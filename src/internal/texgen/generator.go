@@ -73,7 +73,7 @@ func (g *Generator) executeTemplate(tmpl *template.Template, templateName string
 func (g *Generator) loadMessageTemplates() {
 	templateDir := g.config.TemplateDir
 	if templateDir == "" {
-		templateDir = "internal/templates/tex"
+		templateDir = "internal/plugins/tex/templates"
 	}
 	g.sentMessageTemplate = g.loadTemplate(filepath.Join(templateDir, "sent-message.tex"), "sent-message")
 	g.receivedMessageTemplate = g.loadTemplate(filepath.Join(templateDir, "received-message.tex"), "received-message")
@@ -190,7 +190,7 @@ func (g *Generator) writeURLSetupFile() {
 
 	templateDir := g.config.TemplateDir
 	if templateDir == "" {
-		templateDir = "internal/templates/tex"
+		templateDir = "internal/plugins/tex/templates"
 	}
 	err := ioutil.WriteFile(filepath.Join(templateDir, "url-setup.tex"), []byte(content), 0644)
 	if err != nil {

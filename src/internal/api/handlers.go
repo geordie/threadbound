@@ -52,6 +52,7 @@ func (h *Handler) handleGenerate(w http.ResponseWriter, r *http.Request) {
 		Author:          req.Author,
 		PageWidth:       req.PageWidth,
 		PageHeight:      req.PageHeight,
+		TemplateDir:     "", // Templates are embedded in binary
 		IncludeImages:   req.IncludeImages,
 		IncludePreviews: true,
 		ContactNames:    req.ContactNames,

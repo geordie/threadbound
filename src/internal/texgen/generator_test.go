@@ -137,7 +137,7 @@ func TestGenerateBook(t *testing.T) {
 		OutputPath:   "test_book.md",
 		PageWidth:    "5.5in",
 		PageHeight:   "8.5in",
-		TemplateDir:  "../templates/tex",
+		TemplateDir:  "../plugins/tex/templates",
 	}
 
 	generator := New(config, nil) // Pass nil for db since we're not using URL processing
@@ -185,7 +185,7 @@ func TestReceivedMessageReactions(t *testing.T) {
 		OutputPath:      "test_book.md",
 		PageWidth:       "5.5in",
 		PageHeight:      "8.5in",
-		TemplateDir:     "../templates/tex",
+		TemplateDir:     "../plugins/tex/templates",
 	}
 
 	generator := New(config, nil)
@@ -217,7 +217,7 @@ func TestSentMessageReactions(t *testing.T) {
 		OutputPath:      "test_book.md",
 		PageWidth:       "5.5in",
 		PageHeight:      "8.5in",
-		TemplateDir:     "../templates/tex",
+		TemplateDir:     "../plugins/tex/templates",
 	}
 
 	generator := New(config, nil)
@@ -251,7 +251,7 @@ func TestMessageBubbleGeneration(t *testing.T) {
 		PageHeight:      "8.5in",
 	}
 
-	config.TemplateDir = "../templates/tex"
+	config.TemplateDir = "../plugins/tex/templates"
 	generator := New(config, nil)
 
 	_, _, reactions := getMockData()
@@ -307,7 +307,7 @@ func TestSentMessageBubbleGeneration(t *testing.T) {
 		OutputPath:      "test_book.md",
 		PageWidth:       "5.5in",
 		PageHeight:      "8.5in",
-		TemplateDir:     "../templates/tex",
+		TemplateDir:     "../plugins/tex/templates",
 	}
 
 	generator := New(config, nil)
@@ -362,7 +362,7 @@ func TestObjectReplacementCharacterRemoval(t *testing.T) {
 		OutputPath:      "test_book.md",
 		PageWidth:       "5.5in",
 		PageHeight:      "8.5in",
-		TemplateDir:     "../templates/tex",
+		TemplateDir:     "../plugins/tex/templates",
 	}
 
 	generator := New(config, nil)
@@ -417,7 +417,7 @@ func TestObjectReplacementCharacterRemoval(t *testing.T) {
 
 // Helper function to skip tests when template files aren't available
 func skipWithoutTemplates(t *testing.T) bool {
-	templatePath := "../templates/tex/sent-message.tex"
+	templatePath := "../plugins/tex/templates/sent-message.tex"
 	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
 		t.Skip("Template files not available - running in extracted test environment")
 		return true

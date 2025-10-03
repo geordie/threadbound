@@ -115,7 +115,7 @@ func TestTextPluginGenerate(t *testing.T) {
 	config := &models.BookConfig{
 		Title:       "Test Text Book",
 		Author:      "Test Author",
-		TemplateDir: "../../templates/text",
+		TemplateDir: "",
 	}
 
 	stats := &models.BookStats{
@@ -207,7 +207,7 @@ func TestTextPluginGenerateWithAttachments(t *testing.T) {
 	reactions := map[string][]models.Reaction{}
 	config := &models.BookConfig{
 		Title:       "Test",
-		TemplateDir: "../../templates/text",
+		TemplateDir: "",
 	}
 	stats := &models.BookStats{}
 

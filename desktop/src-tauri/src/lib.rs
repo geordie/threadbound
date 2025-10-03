@@ -22,6 +22,11 @@ fn check_directory_exists(path: String) -> bool {
     std::path::Path::new(&path).is_dir()
 }
 
+#[tauri::command]
+fn get_documents_dir() -> Option<String> {
+    dirs::document_dir().and_then(|path| path.to_str().map(|s| s.to_string()))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -38,7 +43,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, check_default_messages_path, check_directory_exists])
+        .invoke_handler(tauri::generate_handler![greet, check_default_messages_path, check_directory_exists, get_documents_dir])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

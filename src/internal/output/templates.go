@@ -2,7 +2,9 @@ package output
 
 import (
 	"bytes"
+	"embed"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"path/filepath"
 	"text/template"
@@ -10,8 +12,10 @@ import (
 
 // TemplateManager handles loading and executing templates
 type TemplateManager struct {
-	templateDir string
-	templates   map[string]*template.Template
+	templateDir    string
+	templates      map[string]*template.Template
+	embeddedFS     embed.FS
+	embeddedPrefix string
 }
 
 // NewTemplateManager creates a new template manager
@@ -22,6 +26,16 @@ func NewTemplateManager(templateDir string) *TemplateManager {
 	}
 }
 
+// NewTemplateManagerWithEmbed creates a new template manager with embedded templates support
+func NewTemplateManagerWithEmbed(templateDir string, embeddedFS embed.FS, embeddedPrefix string) *TemplateManager {
+	return &TemplateManager{
+		templateDir:    templateDir,
+		templates:      make(map[string]*template.Template),
+		embeddedFS:     embeddedFS,
+		embeddedPrefix: embeddedPrefix,
+	}
+}
+
 // LoadTemplate loads and parses a template file
 func (tm *TemplateManager) LoadTemplate(filename string) (*template.Template, error) {
 	// Check if template is already loaded
@@ -29,11 +43,26 @@ func (tm *TemplateManager) LoadTemplate(filename string) (*template.Template, er
 		return tmpl, nil
 	}
 
-	// Load template file
-	fullPath := filepath.Join(tm.templateDir, filename)
-	content, err := ioutil.ReadFile(fullPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load template %s: %w", filename, err)
+	var content []byte
+	var err error
+
+	// Try to load from embedded files first (if available)
+	if tm.embeddedFS != (embed.FS{}) && tm.embeddedPrefix != "" {
+		embeddedPath := filepath.Join(tm.embeddedPrefix, filename)
+		content, err = fs.ReadFile(tm.embeddedFS, embeddedPath)
+	}
+
+	if err != nil || tm.embeddedFS == (embed.FS{}) {
+		// Fallback to filesystem if embedded file not found (for development/custom templates)
+		if tm.templateDir != "" {
+			fullPath := filepath.Join(tm.templateDir, filename)
+			content, err = ioutil.ReadFile(fullPath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load template %s: %w", filename, err)
+			}
+		} else {
+			return nil, fmt.Errorf("failed to load template %s: %w", filename, err)
+		}
 	}
 
 	// Parse template

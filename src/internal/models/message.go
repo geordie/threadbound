@@ -149,7 +149,7 @@ func GetDefaultConfig() *BookConfig {
 		DatabasePath:    "chat.db",
 		AttachmentsPath: "Attachments",
 		OutputPath:      "book.md",
-		TemplateDir:     "internal/templates/tex",
+		TemplateDir:     "internal/plugins/tex/templates",
 		IncludeImages:   true,
 		IncludePreviews: true,
 		PageWidth:       "5.5in",

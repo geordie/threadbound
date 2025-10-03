@@ -24,6 +24,7 @@ function App() {
   const [defaultFound, setDefaultFound] = useState(false);
   const [includeAttachments, setIncludeAttachments] = useState(false);
   const [attachmentsWarning, setAttachmentsWarning] = useState(false);
+  const [outputDir, setOutputDir] = useState("");
   const [title, setTitle] = useState("Our Messages");
   const [outputFormat, setOutputFormat] = useState("tex");
   const [jobId, setJobId] = useState("");
@@ -35,7 +36,19 @@ function App() {
   useEffect(() => {
     checkDefaultPath();
     checkHealth();
+    initializeOutputDir();
   }, []);
+
+  async function initializeOutputDir() {
+    try {
+      const docsDir = await invoke<string | null>("get_documents_dir");
+      if (docsDir) {
+        setOutputDir(docsDir);
+      }
+    } catch (error) {
+      console.error("Failed to get documents directory:", error);
+    }
+  }
 
   async function checkDefaultPath() {
     try {
@@ -65,6 +78,22 @@ function App() {
       }
     } catch (error) {
       console.error("Failed to open directory picker:", error);
+    }
+  }
+
+  async function selectOutputDirectory() {
+    try {
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: "Select Output Directory",
+      });
+
+      if (selected && typeof selected === "string") {
+        setOutputDir(selected);
+      }
+    } catch (error) {
+      console.error("Failed to open output directory picker:", error);
     }
   }
 
@@ -120,6 +149,10 @@ function App() {
       const dbDir = dbPath.substring(0, dbPath.lastIndexOf("/"));
       const attachmentsPath = includeAttachments ? dbDir + "/Attachments" : "";
 
+      // Construct full output path
+      const filename = `book.${outputFormat}`;
+      const fullOutputPath = outputDir ? `${outputDir}/${filename}` : filename;
+
       const response = await fetch(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: {
@@ -128,7 +161,7 @@ function App() {
         body: JSON.stringify({
           database_path: dbPath,
           attachments_path: attachmentsPath || "Attachments",
-          output_path: `book.${outputFormat}`,
+          output_path: fullOutputPath,
           title: title,
           include_images: includeAttachments,
         }),
@@ -244,6 +277,26 @@ function App() {
             <option value="html">HTML</option>
             <option value="txt">Text</option>
           </select>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="output-dir">Output Location</label>
+          <div className="input-with-button">
+            <input
+              id="output-dir"
+              type="text"
+              value={outputDir}
+              onChange={(e) => setOutputDir(e.target.value)}
+              placeholder="~/Documents"
+            />
+            <button
+              type="button"
+              onClick={selectOutputDirectory}
+              className="select-btn"
+            >
+              Change
+            </button>
+          </div>
         </div>
 
         <button

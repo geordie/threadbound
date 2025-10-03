@@ -272,7 +272,7 @@ func TestImageTemplateRegression(t *testing.T) {
 // using the internal markdown generator without requiring external executables
 func TestImageAttachmentIntegration(t *testing.T) {
 	// Skip if we can't find template files (CI environment)
-	templatePath := "../../templates/image-attachment.tex"
+	templatePath := "../plugins/tex/templates/image-attachment.tex"
 	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
 		t.Skip("Template files not available - running in extracted test environment")
 	}
@@ -371,7 +371,7 @@ func TestImageAttachmentIntegration(t *testing.T) {
 // with image attachments using the internal generator
 func TestMessageWithImageAttachment(t *testing.T) {
 	// Skip if we can't find template files
-	templatePath := "../../templates/sent-message.tex"
+	templatePath := "../plugins/tex/templates/sent-message.tex"
 	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
 		t.Skip("Template files not available - running in extracted test environment")
 	}
@@ -455,7 +455,7 @@ func TestMessageWithImageAttachment(t *testing.T) {
 // TestReceivedMessageWithImageAttachment tests received message with image
 func TestReceivedMessageWithImageAttachment(t *testing.T) {
 	// Skip if we can't find template files
-	templatePath := "../../templates/received-message.tex"
+	templatePath := "../plugins/tex/templates/received-message.tex"
 	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
 		t.Skip("Template files not available - running in extracted test environment")
 	}

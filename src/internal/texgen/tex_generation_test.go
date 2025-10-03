@@ -15,7 +15,7 @@ func TestTexGeneration(t *testing.T) {
 		Author:      "Test Author",
 		PageWidth:   "5.5in",
 		PageHeight:  "8.5in",
-		TemplateDir: "../templates/tex",
+		TemplateDir: "../plugins/tex/templates",
 	}
 
 	// Create a minimal generator without database (we don't need URL processing for this test)
