@@ -74,14 +74,14 @@ func TestPDFPluginValidateConfig(t *testing.T) {
 		t.Errorf("Expected no error for valid config, got: %v", err)
 	}
 
-	// Test config without template dir
+	// Test config without template dir (now allowed due to embedded templates)
 	configNoTemplate := &models.BookConfig{
 		Title: "Test Book",
 	}
 
 	err = plugin.ValidateConfig(configNoTemplate)
-	if err == nil {
-		t.Error("Expected error for config without template directory")
+	if err != nil {
+		t.Errorf("Expected no error for config without template directory (templates are embedded), got: %v", err)
 	}
 
 	// Test config gets default page dimensions
@@ -108,17 +108,17 @@ func TestPDFPluginGenerate(t *testing.T) {
 
 	// Create a minimal context for testing
 	// Note: This test will fail without proper templates and database
-	// We'll test that the validation catches missing template directory
+	// Empty template dir is now allowed (templates are embedded)
 	config := &models.BookConfig{
 		Title:        "Test Book",
 		DatabasePath: "nonexistent.db",
-		TemplateDir:  "", // Empty template dir should cause validation error
+		TemplateDir:  "", // Empty is allowed - embedded templates will be used
 	}
 
-	// Test that validation catches the empty template directory
+	// Validate that empty template directory is now allowed
 	err := plugin.ValidateConfig(config)
-	if err == nil {
-		t.Error("Expected validation error for empty template directory")
+	if err != nil {
+		t.Errorf("Expected no validation error for empty template directory (templates are embedded), got: %v", err)
 	}
 
 	// Don't test actual generation as it requires templates and database

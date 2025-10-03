@@ -87,10 +87,8 @@ func (p *PDFPlugin) ValidateConfig(config *models.BookConfig) error {
 		return err
 	}
 
-	// Check for required template directory
-	if config.TemplateDir == "" {
-		return fmt.Errorf("template directory is required for PDF generation")
-	}
+	// Template directory is optional (templates are embedded in binary)
+	// It's only needed if user wants custom templates
 
 	// Validate page dimensions
 	if config.PageWidth == "" {
