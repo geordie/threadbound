@@ -28,6 +28,30 @@ func removeFile(path string) {
 	os.Remove(path) // Ignore errors for cleanup
 }
 
+// cleanupXeLaTeXFiles removes temporary files created by XeLaTeX
+func cleanupXeLaTeXFiles(texPath string) {
+	// Get the base filename without extension
+	baseFilename := strings.TrimSuffix(texPath, ".tex")
+
+	// List of common XeLaTeX temporary file extensions
+	tempExtensions := []string{
+		".aux",  // Auxiliary file for cross-references
+		".log",  // Log file
+		".toc",  // Table of contents
+		".out",  // PDF outline/bookmarks
+		".lof",  // List of figures
+		".lot",  // List of tables
+		".fls",  // File list
+		".fdb_latexmk", // Latexmk database
+	}
+
+	// Remove each temporary file
+	for _, ext := range tempExtensions {
+		tempFile := baseFilename + ext
+		removeFile(tempFile)
+	}
+}
+
 // checkXeLaTeX verifies that XeLaTeX is installed and available
 func checkXeLaTeX() error {
 	cmd := exec.Command("xelatex", "--version")
